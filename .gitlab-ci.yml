@@ -1,0 +1,66 @@
+##
+## Copyright (c) 2024 BedRock Systems, Inc.
+## This software is distributed under the terms of the BedRock Open-Source
+## License. See the LICENSE-BedRock file in the repository root for details.
+##
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'pipeline'
+
+stages:
+  - gen
+  - dyn
+
+ci-gen:
+  image: registry.gitlab.com/skylabs_ai/fm/fm-ci:fm-default
+  stage: gen
+  tags:
+    - fm.shared
+  script:
+    - env
+    - >
+      if [[ $ORIGIN_CI_PROJECT_PATH = $CI_PROJECT_PATH ]]; then
+        echo "Trigger from fm-ci ($ORIGIN_CI_COMMIT_SHA)."
+        export CHECKOUT_COMMIT=$ORIGIN_CI_COMMIT_SHA
+      elif [[ $ORIGIN_CI_MERGE_REQUEST_LABELS =~ .*CI::same-branch.* ]]; then
+        BRANCH=$ORIGIN_CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+        echo "Trigger from $ORIGIN_CI_PROJECT_PATH:$BRANCH (CI::same-branch)."
+        if git fetch origin $BRANCH 2> /dev/null; then
+          echo "Branch $BRANCH exists in the fm-ci repository."
+          BRANCH_COMMIT=$(git rev-parse refs/remotes/origin/$BRANCH)
+          echo "Its commit hash is $BRANCH_COMMIT."
+          export CHECKOUT_COMMIT=$BRANCH_COMMIT
+        else
+          echo "Branch $BRANCH does not exists in the fm-ci repository."
+          echo "Falling back to branch main."
+          git fetch origin main
+          MAIN_COMMIT=$(git rev-parse refs/remotes/origin/main)
+          echo "Its commit hash is $MAIN_COMMIT."
+          export CHECKOUT_COMMIT=$MAIN_COMMIT
+        fi
+      else
+        echo "Trigger from $ORIGIN_CI_PROJECT_PATH:$BRANCH."
+        echo "Using fm-ci main branch."
+        git fetch origin main
+        MAIN_COMMIT=$(git rev-parse refs/remotes/origin/main)
+        echo "Its commit hash is $MAIN_COMMIT."
+        export CHECKOUT_COMMIT=$MAIN_COMMIT
+      fi
+    - echo "CHECKOUT_COMMIT=$CHECKOUT_COMMIT"
+    - git fetch origin $CHECKOUT_COMMIT
+    - git checkout $CHECKOUT_COMMIT
+    - dune exec -- ./gen/gen.exe ${CI_JOB_TOKEN} config.toml gen-config.yml
+  artifacts:
+    paths:
+      - gen-config.yml
+
+trigger-dynamic:
+  stage: dyn
+  needs:
+    - ci-gen
+  trigger:
+    include:
+      - artifact: gen-config.yml
+        job: ci-gen
+    strategy: depend
