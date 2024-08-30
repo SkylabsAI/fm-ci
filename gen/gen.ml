@@ -922,10 +922,15 @@ let proof_tidy : Out_channel.t -> unit = fun oc ->
                 # apps/vswitch/lib/vswitch/proof/";
   line "    # Apply a generic linting policy to all child [.v] files, \
                 enforcing avoidance of imports/exports written using [From]";
-  line "    - python3 ./fmdeps/fm-ci-tools/fm-tidy/coq_lint.py \
-                --use-ci-output-format apps/vswitch";
-  line "    - python3 ./fmdeps/fm-ci-tools/fm-tidy/coq_lint.py
-                --use-ci-output-format apps/vmm/"
+  let lint_dir dir =
+    line "    - python3 ./fmdeps/fm-ci-tools/fm-tidy/coq_lint.py \
+                  --use-ci-output-format %s/" dir
+  in
+  List.iter lint_dir [
+    "apps"; "lib"; "zeta";
+    "fmdeps/cpp2v-core";
+    "fmdeps/cpp2v";
+  ]
 
 let output_config : Out_channel.t -> unit = fun oc ->
   (* Static header, with workflow config. *)
