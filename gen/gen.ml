@@ -27,7 +27,7 @@ let fm_ci_main_branch = "main"
 
 (** CI image for a given version of LLVM (only 16 to 18 exist). *)
 let ci_image : llvm:int -> string = fun ~llvm ->
-  Printf.sprintf "fm-llvm%i-2024-09-16" llvm
+  Printf.sprintf "fm-llvm%i-2024-12-02" llvm
 
 (** Main CI image, with latest supported LLVM. *)
 let main_image = ci_image ~llvm:18
