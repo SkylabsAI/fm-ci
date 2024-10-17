@@ -30,7 +30,7 @@ let ci_image : llvm:int -> string = fun ~llvm ->
   Printf.sprintf "fm-llvm%i-2024-09-16" llvm
 
 (** Main CI image, with latest supported LLVM. *)
-let main_image = ci_image ~llvm:18
+let main_image = ci_image ~llvm:19
 
 (** Should we trim the dune cache? *)
 let trim_cache =
@@ -959,7 +959,7 @@ let output_config : Out_channel.t -> unit = fun oc ->
   if needs_full_build "cpp2v-core" then begin
     cpp2v_core_llvm_job oc 16;
     cpp2v_core_llvm_job oc 17;
-    cpp2v_core_llvm_job oc 19;
+    cpp2v_core_llvm_job oc 18;
     (*cpp2v_core_public_job oc "16";*)
     cpp2v_core_pages_job oc;
   end
