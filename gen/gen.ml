@@ -393,7 +393,7 @@ let common : image:string -> dune_cache:bool -> Out_channel.t -> unit =
   let line fmt = Printf.fprintf oc (fmt ^^ "\n") in
   line "  image: %a" common_ci_image image;
   line "  tags:";
-  line "    - fm.nfs";
+  line "    - fm.nfs.5";
   line "  variables:";
   line "    CLICOLOR: 1";
   line "    GNUMAKEFLAGS: --no-print-directory";
