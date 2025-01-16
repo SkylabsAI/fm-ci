@@ -158,6 +158,11 @@ files/fm-artifact.zip: $(HEADER_DEPS)
 build-release: files/fm-artifact.zip
 	@echo "[DOCKER] Building fm-release"
 	$(Q)docker buildx build --pull -t $(BR_REGISTRY):fm-release \
+		--target squashed \
+		--build-arg BR_FMDEPS_VERSION=$(BR_FMDEPS_VERSION) \
+		--build-arg BR_IMAGE_VERSION=$(BR_IMAGE_VERSION) \
+		--build-arg BR_SWIPL_VERSION=$(SWIPL_MAIN_VERSION) \
+		--build-arg BR_LLVM_MAJ_VER=$(LLVM_MAIN_VERSION) \
 		--build-arg BASE_IMAGE=$(BR_REGISTRY):fm-default -f Dockerfile-release .
 .PHONY: build-release
 

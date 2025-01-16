@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=br:fm
 
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE AS build
 
 COPY files/fm-artifact.zip /home/coq/fm-artifact.zip
 
@@ -17,3 +17,52 @@ ENV COQ_LIB=$OCAMLPATH/coq
 ENV COQPATH=$COQ_LIB/user-contrib
 
 COPY files/LICENSE /home/coq/LICENSE
+
+FROM scratch AS squashed
+COPY --from=build / /
+
+# Copied from debian:bookworm
+# CMD ["bash"]
+
+# Copied from Dockerfile-fm-ci
+WORKDIR /home/coq
+USER coq
+CMD ["/bin/bash", "--login"]
+
+### Environment setup part 1 ########################################################
+ENV PATH="/home/coq/.local/bin:${PATH}"
+ENV OPAM_VERSION="2.2.1"
+ENV NJOBS="6"
+ENV OPAMPRECISETRACKING="1"
+ENV PKG_CONFIG_PATH=/home/coq/.local/share/pkgconfig
+ENV SWI_HOME_DIR=/home/coq/.local/lib/swipl
+
+### Environment setup ########################################################
+
+ARG BR_SWIPL_VERSION
+RUN test -n "${BR_SWIPL_VERSION}"
+
+ARG BR_LLVM_MAJ_VER
+RUN test -n "${BR_LLVM_MAJ_VER}"
+ENV LLVM_VER=${BR_LLVM_MAJ_VER}
+
+ARG BR_FMDEPS_VERSION
+RUN test -n "${BR_FMDEPS_VERSION}"
+
+ARG BR_IMAGE_VERSION
+RUN test -n "${BR_IMAGE_VERSION}"
+
+ENV DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},swipl.${BR_SWIPL_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}"
+
+ENV llvm_base_dir=/usr/lib/llvm/bin
+ENV LLVM_BASE_DIR=${llvm_base_dir}/
+ENV CC=${LLVM_BASE_DIR}clang
+ENV CXX=${LLVM_BASE_DIR}clang++
+# Set PATH for both interactive and scripted users.
+ENV PATH=${llvm_base_dir}:"$PATH"
+
+ENV DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},swipl.${BR_SWIPL_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}"
+ENV llvm_base_dir=/usr/lib/llvm/bin
+ENV LLVM_BASE_DIR=${llvm_base_dir}/
+ENV CC=${LLVM_BASE_DIR}clang
+ENV CXX=${LLVM_BASE_DIR}clang++
