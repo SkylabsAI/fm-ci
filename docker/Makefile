@@ -158,6 +158,7 @@ files/fm-artifact.zip: $(HEADER_DEPS)
 build-release: files/fm-artifact.zip
 	@echo "[DOCKER] Building fm-release"
 	$(Q)docker buildx build --pull -t $(BR_REGISTRY):fm-release \
+		--platform linux/amd64 \
 		--target squashed \
 		--build-arg BR_FMDEPS_VERSION=$(BR_FMDEPS_VERSION) \
 		--build-arg BR_IMAGE_VERSION=$(BR_IMAGE_VERSION) \
