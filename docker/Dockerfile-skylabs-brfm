@@ -1,0 +1,115 @@
+ARG BRFM_BASE_IMAGE
+FROM $BRFM_BASE_IMAGE
+
+# Copy the fully-cloned [fm-workspace] into [/home/coq/fm-workspace]
+ADD --chown=coq:coq fm-workspace /home/coq/fm-workspace
+
+# /-- System dependencies required by [fm-workspace/setup-fmdeps.sh] but not installed
+# |   within the [Dockerfile-fm-ci] image.
+# v
+RUN sudo apt-get install -y -q \
+         libcairo2-dev \
+         libexpat1-dev \
+         libgtk-3-dev \
+         libgtksourceview-3.0-dev
+
+WORKDIR /home/coq/fm-workspace
+
+## BEGIN: [setup-fmdeps.sh] issue
+#
+#  When running [./setup-fmdeps.sh -x -y] on a fresh clone of the toolchain
+#  the following error is produced:
+#  | ...
+#  | #=== ERROR while compiling br-fm-deps.dev =====================================#
+#  | # context     2.3.0 | linux/x86_64 |  | pinned(file:///home/coq/fm-workspace/fmdeps)
+#  | # path        ~/.opam/br-2025-02-25/.opam-switch/build/br-fm-deps.dev
+#  | # command     ~/.opam/br-2025-02-25/bin/dune build -p br-fm-deps -j 31 @install
+#  | # exit-code   1
+#  | # env-file    ~/.opam/log/br-fm-deps-116-17559b.env
+#  | # output-file ~/.opam/log/br-fm-deps-116-17559b.out
+#  | ### output ###
+#  | # [...]
+#  | # File "cpp2v/coq-bluerock-auto-cpp/tests/dune", line 7, characters 0-18:
+#  | # 7 | (include dune.inc)
+#  | #     ^^^^^^^^^^^^^^^^^^
+#  | # Error: File cpp2v/coq-bluerock-auto-cpp/tests/dune.inc doesn't exist.
+#  | # File "cpp2v/rocq-bluerock-cpp-demo/proof/dune", line 15, characters 0-18:
+#  | # 15 | (include dune.inc)
+#  | #      ^^^^^^^^^^^^^^^^^^
+#  | # Error: File cpp2v/rocq-bluerock-cpp-demo/proof/dune.inc doesn't exist.
+#  | # File "cpp2v/rocq-bluerock-cpp-stdlib/theories/dune", line 14, characters 0-18:
+#  | # 14 | (include dune.inc)
+#  | #      ^^^^^^^^^^^^^^^^^^
+#  | # Error: File cpp2v/rocq-bluerock-cpp-stdlib/theories/dune.inc doesn't exist.
+#  | ...
+#
+#  Running [fm-workspace$ make -C fmdeps/cpp2v ast-prepare] is sufficient to resolve this issue,
+#  but then an error related to a file within the freshly-cloned [fm-workspace/fmdeps/fm-ci] repo
+#  is encountered:
+#  | ...
+#  | #=== ERROR while compiling br-fm-deps.dev =====================================#
+#  | # context     2.3.0 | linux/x86_64 |  | pinned(file:///home/coq/fm-workspace/fmdeps)
+#  | # path        ~/.opam/br-2025-02-25/.opam-switch/build/br-fm-deps.dev
+#  | # command     ~/.opam/br-2025-02-25/bin/dune build -p br-fm-deps -j 31 @install
+#  | # exit-code   1
+#  | # env-file    ~/.opam/log/br-fm-deps-116-888455.env
+#  | # output-file ~/.opam/log/br-fm-deps-116-888455.out
+#  | ### output ###
+#  | # Error: The package "br-fm-deps" is defined more than once:
+#  | # - fm-ci/fm-deps/dune-project:13
+#  | # - br-fm-deps.opam:1
+#  | ...
+#
+#  Removing this file from the freshly-cloned [fm-workspace/fmdeps/fm-ci] is sufficient to resolve
+#  this issue, but then the following error related to BlueRock's custom coqc executable is
+#  encountered:
+#  | ...
+#  | #=== ERROR while compiling br-fm-deps.dev =====================================#
+#  | # context     2.3.0 | linux/x86_64 |  | pinned(file:///home/coq/fm-workspace/fmdeps)
+#  | # path        ~/.opam/br-2025-02-25/.opam-switch/build/br-fm-deps.dev
+#  | # command     ~/.opam/br-2025-02-25/bin/dune build -p br-fm-deps -j 31 @install
+#  | # exit-code   1
+#  | # env-file    ~/.opam/log/br-fm-deps-113-d5b766.env
+#  | # output-file ~/.opam/log/br-fm-deps-113-d5b766.out
+#  | ### output ###
+#  | # [...]
+#  | # Hint: opam install coq
+#  | # File "cpp2v-core/rocq-bluerock-brick/theories/noimport/dune", lines 2-4, characters 0-73:
+#  | # 2 | (coq.theory
+#  | # 3 |  (name bedrock.noimport)
+#  | # 4 |  (theories bedrock.lang iris stdpp))
+#  | # Error: Program coqc not found in the tree or in PATH
+#  | #  (context: default)
+#  | # Hint: opam install coq
+#  | # File "cpp2v/coq-bluerock-auto-core/dune", line 10, characters 4-49:
+#  | # 10 |    (../../cpp2v-core/rocq-tools/bin/coqc_perf.exe as coqc)
+#  | #          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#  | # Error: No rule found for cpp2v-core/rocq-tools/bin/coqc_perf.exe
+#  | ...
+#
+#  This chain may continue, but I stopped investigating for now because none of these errors
+#  /actually/ seem to preven the switch from being set up or break [dune build .]/[dune install .].
+#
+#  Therefore, we end this initial invocation with [|| true] and require that a reinvocation is successful.
+RUN ./setup-fmdeps.sh -x -y || true
+RUN ./setup-fmdeps.sh -x -y
+RUN eval $(opam env)
+## END: [setup-fmdeps.sh] issue
+
+RUN make -C fmdeps/cpp2v ast-prepare
+
+## BEGIN: [dune build .] issue
+#
+#  For some reason, after doing all of the above [dune build .] has 4 failing targets. However, if I
+#  re-run [dune build .] then everything succeeds. My best guess is that some dune dependency is broken
+#  but I can't easily debug it. For now we end this initial invocation with [|| true] and require
+#  that a reinvocation is successful.
+RUN dune build . || true
+RUN dune build .
+## END: [dune build .] issue
+
+RUN dune install
+
+WORKDIR /home/coq
+# v-- Remove the source code now that we've successfully run [dune install]
+RUN rm -rf fm-workspace

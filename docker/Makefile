@@ -217,3 +217,22 @@ clean-all: clean
 system-prune:
 	@docker system prune
 .PHONY: system-prune
+
+skylabs-brfm: $(DEFAULT_TAG)
+	$(Q)echo "\nCloning SkyLabs' fork of [fm-workspace]"
+#       v-- NOTE: ensure that the clone is fresh
+	$(Q)rm -rf ./fm-workspace
+	$(Q)git clone --single-branch --branch skylabs-main git@github.com:SkylabsAI/fm-workspace.git
+
+	$(Q)echo "\nRunning the [setup-fmdeps.sh] script to clone deps using SSH"
+	$(Q)cd fm-workspace; ./setup-fmdeps.sh -g -s
+
+	$(Q)echo "\nBuilding a docker image containing the (installed) fm-workspace"
+	$(Q)docker buildx build \
+		--tag "skylabs-brfm:$(DEFAULT_TAG)" \
+		--build-arg BRFM_BASE_IMAGE="$(BR_REGISTRY):$(DEFAULT_TAG)" \
+		--file Dockerfile-skylabs-brfm .
+
+	$(Q)echo "\nRemoving [fm-workspace] now that the image has been constructed"
+	$(Q)rm -rf ./fm-workspace
+.PHONY: skylabs-brfm
