@@ -799,7 +799,7 @@ let nova_job : unit -> unit = fun () ->
     let fn (repo, _) =
       (* We need to keep [bhv] because it is the root. *)
       repo.Config.name = "bhv" ||
-      List.mem repo.Config.name (repo.Config.deps)
+      List.mem repo.Config.name (nova.Config.deps)
     in
     List.filter fn main_build
   in
