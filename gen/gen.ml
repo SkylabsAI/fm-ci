@@ -794,14 +794,40 @@ let nova_job : unit -> unit = fun () ->
     with Not_found -> panic "No config found for NOVA."
   in
 
+  let module S = Set.Make(String) in
+  let trans_deps =
+    let module M = Map.Make(String) in
+    let resolved = M.of_seq @@ List.to_seq @@ List.map (fun (r,_) -> (r.Config.name,r)) main_build in
+    let rec go deps todo =
+      if S.is_empty todo then deps else
+      let n = S.choose todo in
+      let todo = S.remove n todo in
+      let t = M.find n resolved in
+      if S.mem n deps then
+        go deps @@ S.remove n todo
+      else
+        let deps = S.add n deps in
+        let new_deps = S.of_list t.Config.deps in
+        let new_deps = S.diff new_deps deps in
+        let todo = S.union todo new_deps in
+        go deps todo
+    in
+    go S.empty (S.of_list nova.Config.deps)
+  in
+
   (* Remove everything that NOVA does not depend on *)
-  let nova_build =
+  let nova_build, to_delete =
     let fn (repo, _) =
       (* We need to keep [bhv] because it is the root. *)
       repo.Config.name = "bhv" ||
-      List.mem repo.Config.name (nova.Config.deps)
+      repo.Config.name = "NOVA" ||
+      S.mem repo.Config.name trans_deps
     in
-    List.filter fn main_build
+    List.partition fn main_build
+  in
+  let to_delete =
+    let folders = List.map (fun (r,_) -> r.Config.bhv_path) to_delete in
+    String.concat " " folders
   in
   let build_name = "nova-artifact" in
   Checkout.make ~name:build_name nova_build;
@@ -840,6 +866,8 @@ let nova_job : unit -> unit = fun () ->
   line "    - cd %s" clone_dir;
   line "    - time make -j ${NJOBS} init";
   line "    - make dump_repos_info";
+  line "    # Deleting all repositories that are not needed for NOVA";
+  line "    - rm -rf %s" to_delete;
   cmd  "    " Checkout.use_script ~name:build_name;
   line "    - make statusm | tee $CI_PROJECT_DIR/statusm.txt";
   line "    - grep \"^fmdeps/\" $CI_PROJECT_DIR/statusm.txt \
