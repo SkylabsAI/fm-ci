@@ -338,6 +338,13 @@ let repos_needing_full_build : Config.repo list =
 let needs_full_build : string -> bool = fun name ->
   List.exists (fun repo -> repo.Config.name = name) repos_needing_full_build
 
+let deps_folders : Config.repo -> Config.config -> string list =
+  fun r config ->
+  let deps = r.deps in
+  let deps = List.map (fun d -> List.find (fun r -> r.Config.name = d) config.repos) deps in
+  let folders = List.map (fun d -> d.Config.bhv_path) deps in
+  folders
+
 let _ =
   (* Output info: repositories needing a full build. *)
   perr "Repositories needing a full build:";
@@ -810,6 +817,11 @@ let nova_job : unit -> unit = fun () ->
     in
     "gen-installed-artifact" ^ (if master_merge then "" else "-mr")
   in
+  let install_targets =
+    let folders = deps_folders nova config in
+    let targets = List.map (fun path -> "@" ^ path ^ "/install" ) folders in
+    String.concat " " targets
+  in
   let image = main_image in
   line "";
   line "%s:" gen_name;
@@ -844,8 +856,8 @@ let nova_job : unit -> unit = fun () ->
   line "    # Build.";
   line "    - make -C fmdeps/cpp2v ast-prepare";
   line "    - dune build _build/install/default/bin/filter-dune-output";
-  line "    - dune build -j ${NJOBS} @install 2>&1 | \
-                _build/install/default/bin/filter-dune-output";
+  line "    - dune build -j ${NJOBS} %s 2>&1 | \
+                _build/install/default/bin/filter-dune-output" install_targets;
   line "    # Prepare installed artifact.";
   line "    - rm -rf $CI_PROJECT_DIR/fm-install";
   line "    - mkdir $CI_PROJECT_DIR/fm-install";
