@@ -794,9 +794,12 @@ let nova_job : unit -> unit = fun () ->
     with Not_found -> panic "No config found for NOVA."
   in
 
+  (* Remove everything that NOVA does not depend on *)
   let nova_build =
     let fn (repo, _) =
-        List.mem repo.Config.name (repo.Config.deps)
+      (* We need to keep [bhv] because it is the root. *)
+      repo.Config.name = "bhv" ||
+      List.mem repo.Config.name (repo.Config.deps)
     in
     List.filter fn main_build
   in
