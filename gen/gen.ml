@@ -816,21 +816,19 @@ let nova_job : unit -> unit = fun () ->
   in
 
   (* Remove everything that NOVA does not depend on *)
-  let nova_build, to_delete =
-    let fn (repo, _) =
-      (* We need to keep [bhv] because it is the root. *)
-      repo.Config.name = "bhv" ||
-      repo.Config.name = "NOVA" ||
-      S.mem repo.Config.name trans_deps
-    in
-    List.partition fn main_build
-  in
   let to_delete =
-    let folders = List.map (fun (r,_) -> r.Config.bhv_path) to_delete in
+    let fn (repo, _) =
+      not (
+        (* We need to keep [bhv] because it is the root. *)
+        repo.Config.name = "bhv" ||
+        repo.Config.name = "NOVA" ||
+        S.mem repo.Config.name trans_deps
+      )
+    in
+    let folders = List.filter fn main_build in
+    let folders = List.map (fun (r,_) -> r.Config.bhv_path) folders in
     String.concat " " folders
   in
-  let build_name = "nova-artifact" in
-  Checkout.make ~name:build_name nova_build;
 
   let nova_branch =
     match hashes.mr_branch with
@@ -866,9 +864,7 @@ let nova_job : unit -> unit = fun () ->
   line "    - cd %s" clone_dir;
   line "    - time make -j ${NJOBS} init";
   line "    - make dump_repos_info";
-  line "    # Deleting all repositories that are not needed for NOVA";
-  line "    - rm -rf %s" to_delete;
-  cmd  "    " Checkout.use_script ~name:build_name;
+  cmd  "    " Checkout.use_script ~name:"main";
   line "    - make statusm | tee $CI_PROJECT_DIR/statusm.txt";
   line "    - grep \"^fmdeps/\" $CI_PROJECT_DIR/statusm.txt \
                 > $CI_PROJECT_DIR/gitshas.txt";
@@ -881,6 +877,9 @@ let nova_job : unit -> unit = fun () ->
   line "    - mkdir %s" build_dir;
   line "    - mv fmdeps dune-workspace %s/" build_dir;
   line "    - cd %s" build_dir;
+  (* Prune repos that are unnecessary for NOVA *)
+  line "    # Deleting all repositories that are not needed for NOVA";
+  line "    - rm -rf %s" to_delete;
   (* Build and create installed artifact. *)
   line "    # Build.";
   line "    - make -C fmdeps/cpp2v ast-prepare";
