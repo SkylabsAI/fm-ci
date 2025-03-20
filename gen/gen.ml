@@ -69,6 +69,9 @@ let _ =
 
 (** Information about the originating MR, if any. *)
 let mr = Info.get_mr ()
+let skip_proofs =
+  match mr with None -> false | Some(mr) ->
+  List.mem "CI-skip-proofs" mr.Info.mr_labels
 
 let _ =
   (* Output info: MR information. *)
@@ -897,7 +900,7 @@ let cpp2v_core_llvm_job : int -> unit = fun llvm ->
      This is necessary to ensure that our wrappers are functional.
      We cannot tell dune about the dependency of coqc_perf on rocq
      because the package that provides the rocq binary also installs
-     a binary called coqc, which is the name under which coqc_perf 
+     a binary called coqc, which is the name under which coqc_perf
      will be used.
   *)
   line "    - dune build @fmdeps/coq/install";
@@ -1091,7 +1094,10 @@ let _ =
   perr "Target file: %S." yaml_file;
   Out_channel.with_open_text yaml_file @@ (fun oc ->
     let module M = Output(struct let oc = oc end) in
-    M.output_config ()
+    if not skip_proofs then
+      M.output_config ()
+    else
+      ()
   );
   perr "#### Contents of %S" yaml_file;
   let contents =
