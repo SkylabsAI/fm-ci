@@ -100,6 +100,13 @@ To set up new CI images, e.g., with new FM dependencies, you need to:
 
 To add an LLVM version, also update the hardcoded list in `gen.ml`.
 
+## Process for Changing Default LLVM Version
+
+1. Update `LLVM_MAIN_VERSION` in `fm-ci/docker/Makefile`.
+2. Run `make only-tag-default` in `fm-ci/docker`
+3. Run `make only-push-default` in `fm-ci/docker` - this needs
+   `I_KNOW_WHAT_I_AM_DOING=yes`.
+
 ## Public Release Image
 
 The public release image setup is also covered by the `Makefile`. The relevant

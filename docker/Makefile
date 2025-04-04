@@ -105,9 +105,13 @@ list-targets:
 
 DEFAULT_TAG := fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
 
-tag-default: $(DEFAULT_TAG)
+only-tag-default:
 	@echo "[DOCKER] Tagging $< as fm-default"
 	@docker image tag $(BR_REGISTRY):$< $(BR_REGISTRY):fm-default
+.PHONY: only-tag-default
+
+tag-default: $(DEFAULT_TAG)
+	$(MAKE) only-tag-default
 .PHONY: tag-default
 
 run-default: tag-default
@@ -115,7 +119,7 @@ run-default: tag-default
 	$(Q)docker run -i -t $(BR_REGISTRY):fm-default
 .PHONY: run-default
 
-push-default: tag-default
+only-push-default:
 	@echo "[DOCKER] Pushing tag fm-default"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
 	@echo "(Let's hope you did not mess anything up...)"
@@ -125,7 +129,10 @@ else
 	@echo "  docker push $(BR_REGISTRY):fm-default"
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
 endif
+.PHONY: only-push-default
 
+push-default: tag-default
+	$(MAKE) only-tag-default
 .PHONY: push-default
 
 gitlab-login:
