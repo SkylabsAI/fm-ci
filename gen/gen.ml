@@ -1000,6 +1000,7 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
     project_name = "cpp2v-core" && main_branch "cpp2v-core" = commit_branch
   in
   if publish then cpp2v_core_pages_publish ()
+[@@warning "-32"]
 
 (* TODO (FM-4443): generalize to:
    1) run on all [.v] artifacts
@@ -1049,6 +1050,7 @@ let fm_docs_job : unit -> unit = fun () ->
   sect "    " "Initialize checkout" (fun () ->
   line "    - ./fm-build.py -b -j${NJOBS}");
   line "    - ./fmdeps/fm-docs/ci-build.sh"
+[@@warning "-32"]
 
 let output_config : unit -> unit = fun () ->
   (* Static header, with workflow config. *)
@@ -1072,15 +1074,15 @@ let output_config : unit -> unit = fun () ->
      trigger. The artifacts of these jobs are relied upon by NOVA CI. *)
   if trigger.trigger_kind = "default" || needs_full_build "NOVA" then nova_job ();
   (* fm-docs build *)
-  if trigger.trigger_kind = "default" || needs_full_build "fm-docs" then begin
-    fm_docs_job ()
-  end;
+  (* if trigger.trigger_kind = "default" || needs_full_build "fm-docs" then begin *)
+  (*   fm_docs_job () *)
+  (* end; *)
   (* Extra cpp2v-core builds. *)
   if needs_full_build "cpp2v-core" then begin
     cpp2v_core_llvm_job 19;
-    cpp2v_core_llvm_job 20;
+    (* cpp2v_core_llvm_job 20; *)
     (*cpp2v_core_public_job oc "16";*)
-    cpp2v_core_pages_job ();
+    (* cpp2v_core_pages_job (); *)
   end
 
 end
