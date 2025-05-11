@@ -85,10 +85,10 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ARG BR_SWIPL_VERSION
 RUN test -n "${BR_SWIPL_VERSION}"
 
-RUN curl -O -L https://github.com/SWI-Prolog/swipl/archive/refs/tags/V${BR_SWIPL_VERSION}.tar.gz \
+RUN curl -O -L https://github.com/SWI-Prolog/swipl-devel/archive/refs/tags/V${BR_SWIPL_VERSION}.tar.gz \
  && tar -xf V${BR_SWIPL_VERSION}.tar.gz \
  && rm V${BR_SWIPL_VERSION}.tar.gz \
- && mv swipl-${BR_SWIPL_VERSION} swipl \
+ && mv swipl-devel-${BR_SWIPL_VERSION} swipl \
  && mkdir swipl-build \
  && cd swipl-build \
  && cmake -DCMAKE_INSTALL_PREFIX=../.local -DSWIPL_PACKAGES=OFF \
