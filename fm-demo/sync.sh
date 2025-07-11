@@ -1,5 +1,14 @@
 #!/bin/sh -vxe
 
+# To run this _inside_ a container,
+# - outside code provides source bhv tree to container, containing this script
+# - bind-mount /workspaces as target
+# - this script finds its containing bhv tree
+# - build source tarball
+#   - including the docker image should be optional/skipped
+# - running the build should go via docker or not
+#   - alternative: always via Docker?
+
 # "Configuration"
 skeleton_path=$PWD/skeleton
 BHV=$(realpath $PWD/../../../)
