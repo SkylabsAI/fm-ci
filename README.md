@@ -181,9 +181,9 @@ This sets `FM_CI_DOCKER_OPAM=true` to:
 - disable standard CI jobs
 - build a Docker release image using
 
-### Release
+### Release, V1
 
-A daily pipeline is used to release the public release docker image. This is
+A daily pipeline is used to release the old public release docker image. This is
 done by setting `DOCKER_RELEASE_MODE=true`, which disables standard CI jobs
 and instead runs a special job building and publishing the CI image (see the
 `.gitlab-ci.yml` file for details).

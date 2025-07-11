@@ -100,7 +100,7 @@ To set up new CI images, e.g., with new FM dependencies, you need to:
 
 To add an LLVM version, also update the hardcoded list in `gen.ml`.
 
-## Public Release Image
+## Public Release Image, V1 (old)
 
 The public release image setup is also covered by the `Makefile`. The relevant
 targets are: `make build-release`, `make run-release` and `make push-release`.
