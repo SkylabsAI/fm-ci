@@ -156,8 +156,9 @@ logout:
 monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 
+TAR = $(shell which gtar || which tar)
 $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
-	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time tar cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
+	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
 
 CP = $(shell which gcp || which cp)
 prepare-opam-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
