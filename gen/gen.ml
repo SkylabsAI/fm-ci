@@ -1091,7 +1091,7 @@ let opam_docker_install_job : unit -> unit = fun () ->
   line "    - echo \"$CI_REGISTRY_PASSWORD\" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY";
   line "    - GIT_AUTH_TOKEN=%s docker build --pull -f Dockerfile-checkout-opam-release \
                 --secret type=env,id=CI_JOB_TOKEN \
-                --build-arg BHV_COMMIT=%s \
+                --build-arg ROOT_COMMIT=%s \
                 --push \
                 -t %s ." token bhv_hash new_image_name;
   (* line "    - docker push %s" new_image_name; *)

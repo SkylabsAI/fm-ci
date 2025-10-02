@@ -2,20 +2,20 @@ ARG BASE_REPO=registry.gitlab.com/skylabs_ai/fm/skylabs-fm
 ARG BASE_TAG=fm-default
 FROM $BASE_REPO:$BASE_TAG
 
-ARG BHV_COMMIT
-ENV BHV_COMMIT=${BHV_COMMIT}
+ARG ROOT_COMMIT
+ENV ROOT_COMMIT=${ROOT_COMMIT}
 
 COPY --chown=coq files/LICENSE /home/coq/LICENSE
 
 COPY files/opam-clean /tmp/files/opam-clean
 COPY checkout_script.sh /tmp
 
-ENV bhv_path=/tmp/build-dir
+ENV build_path=/tmp/build-dir
 RUN --mount=type=secret,id=CI_JOB_TOKEN,env=CI_JOB_TOKEN \
-  git clone --depth 1 https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bedrocksystems/bhv.git ${bhv_path} \
-  && cd ${bhv_path} \
-  && git fetch --quiet origin ${BHV_COMMIT} \
-  && git -c advice.detachedHead=false checkout ${BHV_COMMIT} \
+  git clone --depth 1 https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bedrocksystems/bhv.git ${build_path} \
+  && cd ${build_path} \
+  && git fetch --quiet origin ${ROOT_COMMIT} \
+  && git -c advice.detachedHead=false checkout ${ROOT_COMMIT} \
   && make -j ${NJOBS} init GITLAB_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bedrocksystems/" \
   && bash -x /tmp/checkout_script.sh && sudo rm -f /tmp/checkout_script.sh \
   && ./fmdeps/fm-ci/docker/opam_build.sh \
