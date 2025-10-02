@@ -4,10 +4,11 @@ opam option depext=false
 opam update -y
 opam repo add archive git+https://github.com/ocaml/opam-repository-archive
 
-make ast-prepare -sj${NJOBS}
+make -C fmdeps/auto ast-prepare -sj${NJOBS}
+make -C fmdeps/auto-docs ast-prepare -sj${NJOBS}
 opam pin add -y -k rsync --recursive -n --with-version dev .
 
-opam install -y $(opam pin | grep -E '/fmdeps/(cpp2v|vscoq|coq-lsp)' |
+opam install -y $(opam pin | grep -E '/fmdeps/(auto|BRiCk|vscoq|coq-lsp)' |
   grep -E -v 'rocq-bluerock-cpp-(demo|stdlib)' |
   awk '{print $1}')
 /tmp/files/opam-clean
