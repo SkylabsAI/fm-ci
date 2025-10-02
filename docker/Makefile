@@ -13,7 +13,7 @@ LLVM_VERSIONS ?= 18 19 20 21
 LLVM_MAIN_VERSION ?= 19
 I_KNOW_WHAT_I_AM_DOING ?= no
 QUIET ?= true
-FM_RELEASE_TARBALL_NAME = bluerock-fm-release-$(FM_RELEASE_FULL_VERSION)
+FM_RELEASE_TARBALL_NAME = skylabs-fm-release-$(FM_RELEASE_FULL_VERSION)
 
 
 # Checking the value of I_KNOW_WHAT_I_AM_DOING.
@@ -146,18 +146,19 @@ logout:
 	$(Q)docker logout $(REGISTRY)
 .PHONY: logout
 
-bhv_parent=../../../..
+monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 
-$(bhv_parent)/$(docker_build_folder)/files/bhv.tar:
-	cd $(bhv_parent); mkdir -p $(docker_build_folder)/files; time tar cf $(docker_build_folder)/files/bhv.tar bhv/
+$(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
+	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time tar cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
 
-prepare-opam-release: $(bhv_parent)/$(docker_build_folder)/files/bhv.tar
-	cp -t $(bhv_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
-	cp -t $(bhv_parent)/$(docker_build_folder) Dockerfile-opam-release
+CP = $(shell which gcp || which cp)
+prepare-opam-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
+	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
+	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
 build-opam-release: prepare-opam-release
-	cd $(bhv_parent)/$(docker_build_folder); \
+	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
 		--build-arg BASE_IMAGE=$(BR_REGISTRY):$(DEFAULT_TAG) \
