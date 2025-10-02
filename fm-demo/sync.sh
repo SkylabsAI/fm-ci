@@ -41,7 +41,7 @@ cd ${target}
 
 # Sync our skeleton, and preserve demos
 # Getting ${exclusions} correct is optional but reduces noise/extra work when rerunning the script
-exclusions="--exclude rocq-bluerock-cpp-demo --exclude rocq-bluerock-cpp-stdlib --exclude flags --exclude fm-docs --exclude docker --exclude ${docker_target_name} --exclude _build"
+exclusions="--exclude rocq-bluerock-cpp-demo --exclude rocq-bluerock-cpp-stdlib --exclude flags --exclude docker --exclude ${docker_target_name} --exclude _build"
 rsync -avc --copy-unsafe-links --delete ${exclusions} ${skeleton_path}/ ${target}/ "$@"
 
 # Package our demos
@@ -49,7 +49,6 @@ rsync -avc --delete --delete-excluded ${BHV}/fmdeps/cpp2v/rocq-bluerock-cpp-demo
 #rsync -avc --delete --delete-excluded --exclude theories ${BHV}/fmdeps/cpp2v/rocq-bluerock-cpp-stdlib . "$@"
 rsync -avc --delete --delete-excluded ${BHV}/fmdeps/cpp2v/rocq-bluerock-cpp-stdlib . "$@"
 rsync -avc --delete --delete-excluded ${BHV}/fmdeps/cpp2v/flags/ flags/ "$@"
-rsync -avc --delete --delete-excluded --exclude .git ${BHV}/fmdeps/fm-docs/ fm-docs/ "$@"
 ln -sf ../../cpp2v-dune-gen.sh rocq-bluerock-cpp-demo/proof/
 ln -sf ../../cpp2v-dune-gen.sh rocq-bluerock-cpp-stdlib/theories/
 ln -sf ../../cpp2v-dune-gen.sh rocq-bluerock-cpp-stdlib/tests/
@@ -60,13 +59,10 @@ echo >> _CoqProject
 ${BHV}/support/gather-coq-paths.py `find . -name dune` >> _CoqProject
 
 docker run -v ${target}:${demo_mount_point} --rm -it ${img_name} bash -l -c \
-       "cd ${demo_mount_point}; dune build; cd fm-docs; ./core-build.sh"
+       "cd ${demo_mount_point}; dune build"
 
 # Alternatively, do the build directly because we are inside the container?
-# cd ${demo_mount_point}; dune build; cd fm-docs; ./core-build.sh
-
-# Copy fm-docs output back to source, so we won't erase it at next pass.
-rsync -avc fm-docs/ ${BHV}/fmdeps/fm-docs/ "$@"
+# cd ${demo_mount_point}; dune build
 
 # Copy docker image inside container (if we're not building a shrunk tarball)
 
