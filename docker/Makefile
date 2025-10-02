@@ -168,7 +168,8 @@ build-opam-release: prepare-opam-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_IMAGE=$(BR_REGISTRY):$(DEFAULT_TAG) \
+		--build-arg BASE_REPO="$(DOCKER_SKYLABS_FM_REGISTRY)" \
+		--build-arg BASE_TAG=fm-default \
 		-t $(BR_REGISTRY):$(RELEASE_TAG) \
 		.
 

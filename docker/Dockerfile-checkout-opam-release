@@ -1,4 +1,6 @@
-FROM registry.gitlab.com/bedrocksystems/formal-methods/fm-ci:fm-default
+ARG BASE_REPO=registry.gitlab.com/skylabs_ai/fm/skylabs-fm
+ARG BASE_TAG=fm-default
+FROM $BASE_REPO:$BASE_TAG
 
 ARG BHV_COMMIT
 ENV BHV_COMMIT=${BHV_COMMIT}
