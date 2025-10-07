@@ -56,7 +56,7 @@ DOCKER_RUN_TARGETS =
 DOCKER_PUSH_TARGETS =
 
 define image-target
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project files/fmdocs_python_deps.txt
+fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
 	@echo "[DOCKER] Building $$@"
 	$$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
@@ -145,9 +145,6 @@ login: gitlab-login gitlab-token
 logout:
 	$(Q)docker logout $(REGISTRY)
 .PHONY: logout
-
-files/fmdocs_python_deps.txt: ../../fm-docs/python_requirements.txt
-	cp $< $@
 
 bhv_parent=../../../..
 docker_build_folder=docker-opam-release
