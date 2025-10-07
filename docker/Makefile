@@ -161,10 +161,12 @@ $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
 	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
 
 CP = $(shell which gcp || which cp)
+.PHONY: prepare-release
 prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
+.PHONY: build-release
 build-release: prepare-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
@@ -174,10 +176,10 @@ build-release: prepare-release
 		-t $(BR_REGISTRY):$(RELEASE_TAG) \
 		.
 
+.PHONY: run-release
 run-release: build-release
 	@echo "[DOCKER] Running fm-release"
 	$(Q)docker run -i -t $(BR_REGISTRY):$(RELEASE_TAG)
-.PHONY: run-release
 
 push-release: build-release
 	@echo "[DOCKER] Pushing fm-release"
