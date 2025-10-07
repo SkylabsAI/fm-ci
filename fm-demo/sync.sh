@@ -30,11 +30,6 @@ img_name=registry.gitlab.com/bedrocksystems/formal-methods/fm-ci:fm-opam-release
 
 echo ">>> Assembling release ${release_ver} in path ${target} and tarball ${target_tarball}"
 
-# Prepare source tree
-# Regenerate dune.inc files
-make -C ${BHV}/fmdeps/cpp2v clean -sj
-make -C ${BHV}/fmdeps/cpp2v ast-prepare -sj
-
 # Prepare target
 mkdir -p ${target}
 cd ${target}

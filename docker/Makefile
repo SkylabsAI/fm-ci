@@ -12,7 +12,7 @@ FM_RELEASE_FULL_VERSION = 2025-08-19
 # FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)
 # We keep $(BR_IMAGE_VERSION) purely internal.
 # FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)-$(BR_IMAGE_VERSION)
-RELEASE_TAG ?= fm-opam-release-latest
+RELEASE_TAG ?= fm-release-latest
 # Bump the following number when pushing new images with the same version
 # numbers. This is necessary to properly invalidate the NOVA cache.
 BR_IMAGE_VERSION ?= 1
@@ -161,11 +161,13 @@ $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
 	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
 
 CP = $(shell which gcp || which cp)
-prepare-opam-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
+.PHONY: prepare-release
+prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
-build-opam-release: prepare-opam-release
+.PHONY: build-release
+build-release: prepare-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
@@ -174,13 +176,13 @@ build-opam-release: prepare-opam-release
 		-t $(BR_REGISTRY):$(RELEASE_TAG) \
 		.
 
-run-release: build-release
-	@echo "[DOCKER] Running fm-opam-release"
-	$(Q)docker run -i -t $(BR_REGISTRY):$(RELEASE_TAG)
 .PHONY: run-release
+run-release: build-release
+	@echo "[DOCKER] Running fm-release"
+	$(Q)docker run -i -t $(BR_REGISTRY):$(RELEASE_TAG)
 
 push-release: build-release
-	@echo "[DOCKER] Pushing fm-opam-release"
+	@echo "[DOCKER] Pushing fm-release"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
 	@echo "(Let's hope you did not mess anything up...)"
 	$(Q)docker push $(BR_REGISTRY):$(RELEASE_TAG)

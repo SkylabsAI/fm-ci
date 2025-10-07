@@ -4,8 +4,6 @@ opam option depext=false
 opam update -y
 opam repo add archive git+https://github.com/ocaml/opam-repository-archive
 
-make -C fmdeps/auto ast-prepare -sj${NJOBS}
-make -C fmdeps/auto-docs ast-prepare -sj${NJOBS}
 opam pin add -y -k rsync --recursive -n --with-version dev .
 
 opam install -y $(opam pin | grep -E '/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))' |
