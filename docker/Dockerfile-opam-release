@@ -1,17 +1,19 @@
 # FROM $BASE_IMAGE
-FROM registry.gitlab.com/bedrocksystems/formal-methods/fm-ci:fm-default
+ARG BASE_REPO=registry.gitlab.com/skylabs_ai/fm/skylabs-fm
+ARG BASE_TAG=fm-default
+FROM $BASE_REPO:$BASE_TAG
 
 COPY --chown=coq files/LICENSE /home/coq/LICENSE
 
 COPY files/opam-clean /tmp/files/opam-clean
 
 RUN \
-  --mount=type=bind,target=/tmp/bhv.tar,source=files/bhv.tar \
+  --mount=type=bind,target=/tmp/skylabs-fm.tar,source=files/skylabs-fm.tar \
   cd /tmp \
-  && tar xf bhv.tar \
-  && cd /tmp/bhv \
+  && tar xf skylabs-fm.tar \
+  && cd /tmp/skylabs-fm \
   && ./fmdeps/fm-ci/docker/opam_build.sh \
-  && sudo rm -rf /tmp/bhv
+  && sudo rm -rf /tmp/skylabs-fm
 
-# Can't be in the previous run command: it fails on bhv.tar
+# Can't be in the previous run command: it fails on skylabs-fm.tar
 RUN sudo rm -rf /tmp/*
