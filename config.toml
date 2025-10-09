@@ -126,16 +126,18 @@ path = "."
 
 [repo.nova-interface]
 gitlab = "FM/bluerock/nova-interface"
+branch = "skylabs-main"
 deps = ["fm-ci", "auto"]
 path = "./bluerock/nova-interface"
 
 [repo.NOVA]
 gitlab = "FM/bluerock/NOVA"
-branch = "proof"
+branch = "skylabs-proof"
 deps = ["fm-ci", "nova-interface"]
 path = "./bluerock/NOVA"
 
 [repo.bhv]
 gitlab = "FM/bluerock/bhv"
+branch = "skylabs-main"
 deps = ["fm-ci", "nova-interface", "NOVA"]
 path = "./bluerock/bhv"
