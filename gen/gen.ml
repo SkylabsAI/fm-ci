@@ -433,7 +433,7 @@ let output_static : unit -> unit = fun () ->
 let init_command indent =
   sect indent "Initialize skylabs-fm" (fun () ->
   icmd indent "time make -j ${NJOBS} fmdeps-clone bluerock-clone SHALLOW=1";
-  icmd indent "make describe; make bluerock-describe")
+  icmd indent "make describe")
 
 let find_unique_config = fun name configs ->
   let is_match (repo, _) = String.equal repo.Config.name name in
@@ -542,7 +542,7 @@ let main_job : unit -> unit = fun () ->
   cmd  "    - " init_command;
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - cp support/fm/dune_config ~/.config/dune/config";
+  line "    - echo '(lang dune 3.8)\\n(display short)' > ~/.config/dune/config";
   line "    - rm -rf _build";
   (* Trim the dune cache if necessary. *)
   if trigger.trim_dune_cache then begin
