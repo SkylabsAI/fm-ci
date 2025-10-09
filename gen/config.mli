@@ -11,9 +11,9 @@ type repo = {
   name : string;
   (** Name of the repository (used as key). *)
   gitlab : string;
-  (** BlueRock GitLab project path for the repository. *)
-  bhv_path : string;
-  (** Relative path of the clone in bhv. *)
+  (** SkyLabs AI GitLab project path for the repository. *)
+  skylabs_fm_path : string;
+  (** Relative path of the clone in skylabs-fm. *)
   main_branch : string;
   (** Name of the main branch. *)
   deps : string list;

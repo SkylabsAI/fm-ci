@@ -8,7 +8,7 @@ type versions = {
 type repo = {
   name : string;
   gitlab : string;
-  bhv_path : string;
+  skylabs_fm_path : string;
   main_branch : string;
   deps : string list;
   vendored : bool;
@@ -77,27 +77,33 @@ let read_config : string -> config = fun file ->
             panic "entry [repo.%s] is not a table" name
           in
           let gitlab = ref None in
-          let bhv_path = ref None in
+          let skylabs_fm_path = ref None in
           let main_branch = ref None in
           let deps = ref None in
           let vendored = ref None in
           let handle_config key value =
             let key = Table.Key.to_string key in
             match (key, value) with
-            | ("gitlab"  , TString(s)           ) -> gitlab := Some(s)
+            | ("gitlab"  , TString(s)           ) ->
+                gitlab := Some(s)
             | ("gitlab"  , _                    ) ->
                 panic "expected string in field [%s.%s]" repo key
-            | ("branch"  , TString(s)           ) -> main_branch := Some(s)
+            | ("branch"  , TString(s)           ) ->
+                main_branch := Some(s)
             | ("branch"  , _                    ) ->
                 panic "expected string in field [%s.%s]" repo key
-            | ("path"    , TString(s)           ) -> bhv_path := Some(s)
+            | ("path"    , TString(s)           ) ->
+                skylabs_fm_path := Some(s)
             | ("path"    , _                    ) ->
                 panic "expected string in field [%s.%s]" repo key
-            | ("deps"    , TArray(NodeString(l))) -> deps := Some(l)
-            | ("deps"    , TArray(NodeEmpty)    ) -> deps := Some([])
+            | ("deps"    , TArray(NodeString(l))) ->
+                deps := Some(l)
+            | ("deps"    , TArray(NodeEmpty)    ) ->
+                deps := Some([])
             | ("deps"    , _                    ) ->
                 panic "expected string list in [%s.%s]" repo key
-            | ("vendored", TBool(b)             ) -> vendored := Some(b)
+            | ("vendored", TBool(b)             ) ->
+                vendored := Some(b)
             | ("vendored", _                    ) ->
                 panic "expected bool in field [%s.%s]" repo key
             | (_         , _                    ) ->
@@ -109,15 +115,17 @@ let read_config : string -> config = fun file ->
             | Some(gitlab) -> gitlab
             | None         -> Format.sprintf "FM/%s" name
           in
-          let bhv_path =
-            match !bhv_path with
+          let skylabs_fm_path =
+            match !skylabs_fm_path with
             | Some(path) -> path
             | None       -> Format.sprintf "./fmdeps/%s" name
           in
           let main_branch = Option.value !main_branch ~default:"main" in
           let deps = Option.value !deps ~default:[] in
           let vendored = Option.value !vendored ~default:false in
-          let repo = {name; gitlab; bhv_path; main_branch; deps; vendored} in
+          let repo =
+            {name; gitlab; skylabs_fm_path; main_branch; deps; vendored}
+          in
           repos := repo :: !repos
         in
         Toml.Types.Table.iter handle_repo table

@@ -267,7 +267,7 @@ let _ =
     let deps = String.concat ", " repo.Config.deps in
     perr "%s:" repo.Config.name;
     perr " - gitlab       : %s" repo.Config.gitlab;
-    perr " - bhv path     : %s" repo.Config.bhv_path;
+    perr " - path         : %s" repo.Config.skylabs_fm_path;
     perr " - main branch  : %s" repo.Config.main_branch;
     perr " - deps         : [%s]" deps;
     perr " - vendored     : %b" repo.Config.vendored;
@@ -390,7 +390,7 @@ let _ =
   | `Partial -> perr "Full timing for bhv: partial."
   | `Full    -> perr "Full timing for bhv: full."
 
-(** Location of the bhv checkout in CI builds. *)
+(** Location of the skylabs-fm checkout in CI builds. *)
 let build_dir = "/tmp/build-dir"
 
 module type CHANNEL = sig
@@ -431,9 +431,9 @@ let output_static : unit -> unit = fun () ->
   line ""
 
 let init_command indent =
-  sect indent "Initialize bhv" (fun () ->
-  icmd indent "time make -j ${NJOBS} init BRASS_aarch64=off BRASS_x86_64=off SHALLOW=1";
-  icmd indent "make dump_repos_info")
+  sect indent "Initialize skylabs-fm" (fun () ->
+  icmd indent "time make -j ${NJOBS} fmdeps-clone bluerock-clone SHALLOW=1";
+  icmd indent "make describe; make bluerock-describe")
 
 let find_unique_config = fun name configs ->
   let is_match (repo, _) = String.equal repo.Config.name name in
@@ -442,15 +442,15 @@ let find_unique_config = fun name configs ->
   (config, rest)
 
 let checkout_command indent (repo, hash)  =
-  let bhv_path = repo.Config.bhv_path in
-  icmd indent "git -C %s fetch --depth 1 --quiet origin %s" bhv_path hash;
-  icmd indent "git -C %s -c advice.detachedHead=false checkout %s" bhv_path hash
+  let path = repo.Config.skylabs_fm_path in
+  icmd indent "git -C %s fetch --depth 1 --quiet origin %s" path hash;
+  icmd indent "git -C %s -c advice.detachedHead=false checkout %s" path hash
 
 let checkout_commands indent config =
-  (* We must checkout bhv first to make sure we can run init so that the
-     directories of all other repos are available. *)
-  let (bhv, rest) = find_unique_config "bhv" config in
-  checkout_command indent bhv;
+  (* We must checkout skylabs-fm first to make sure we can run init so that
+     the directories of all other repos are available. *)
+  let (skylabs_fm, rest) = find_unique_config "skylabs-fm" config in
+  checkout_command indent skylabs_fm;
   init_command indent;
   List.iter (checkout_command indent) rest
 
@@ -520,7 +520,7 @@ let common : image:string -> dune_cache:bool -> unit =
 let skylabs_fm_hash : string =
   let (_, hash) =
     try List.find (fun (r, _) -> r.Config.name = "skylabs-fm") main_build
-    with Not_found -> panic "No repo data for bhv."
+    with Not_found -> panic "No repo data for skylabs-fm."
   in hash
 
 let skylabs_fm_cloning : string -> string -> unit = fun indent destdir ->
@@ -913,10 +913,8 @@ let docker_services : unit -> unit = fun () ->
   line "    - docker:%s-dind" docker_img_version
 
 (* XXX lens *)
-let with_bhv_path bhv_path config =
-  let open Config in
-  let ({name; gitlab; bhv_path = _; main_branch; deps; vendored}, hash) = config in
-  ({name; gitlab; bhv_path; main_branch; deps; vendored}, hash)
+let with_skylabs_fm_path skylabs_fm_path (config, hash) =
+  (Config.{config with skylabs_fm_path}, hash)
 
 let opam_docker_install_job : unit -> unit = fun () ->
   let new_image_name = with_registry "fm-opam-release-latest" in
@@ -928,7 +926,7 @@ let opam_docker_install_job : unit -> unit = fun () ->
   sect "    - " "Environment" (fun () ->
   line "    - env");
   let (fm_ci, _) = find_unique_config "fm-ci" main_build in
-  checkout_command "    - " (with_bhv_path "." fm_ci);
+  checkout_command "    - " (with_skylabs_fm_path "." fm_ci);
   line "    - cd docker";
   line "    - |-";
   line "      cat > checkout_script.sh <<EOF";
@@ -1016,7 +1014,7 @@ let output_config : unit -> unit = fun () ->
     (* This conditional is ad-hoc, but both [do_full_opam] and [do_docker_opam]
     are only set in special scheduled pipelines that are only needed for these jobs. *)
     if not do_full_opam && not do_docker_opam then begin
-      (* Main bhv build with performance comparison support. *)
+      (* Main build with performance comparison support. *)
       main_job ();
       (* Stop here if we only want the full job. *)
       match trigger.only_full_build with true -> () | false ->
