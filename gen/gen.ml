@@ -515,7 +515,7 @@ let gen_common : runner_tag:string -> image:string -> dune_cache:bool -> unit =
 
 let common : image:string -> dune_cache:bool -> unit =
     fun ~image ~dune_cache ->
-  gen_common ~runner_tag:"fm.nfs" ~image ~dune_cache
+  gen_common ~runner_tag:"fm.shared" ~image ~dune_cache
 
 let bhv_hash : string =
   let (_, hash) =
@@ -871,7 +871,7 @@ let cpp2v_core_pages_publish : unit -> unit = fun () ->
   line "  needs:";
   line "    - cpp2v-docs-gen";
   line "  tags:";
-  line "    - fm.nfs";
+  line "    - fm.shared";
   line "  script:";
   line "    - git config --global user.email \"${BRICK_BOT_EMAIL}\"";
   line "    - git config --global user.name \"${BRICK_BOT_USERNAME}\"";
@@ -1055,7 +1055,7 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
 let skip_proof_job : unit -> unit = fun () ->
   line "skip-proof-job:";
   line "  tags:";
-  line "    - fm.nfs";
+  line "    - fm.shared";
   line "  image: %s" (with_registry main_image);
   line "  script:";
   line "    - echo \"Skipping build as requested via CI-skip-proof label.\"";
