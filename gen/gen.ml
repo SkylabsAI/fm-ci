@@ -517,17 +517,17 @@ let common : image:string -> dune_cache:bool -> unit =
     fun ~image ~dune_cache ->
   gen_common ~runner_tag:"fm.shared" ~image ~dune_cache
 
-let bhv_hash : string =
+let skylabs_fm_hash : string =
   let (_, hash) =
-    try List.find (fun (r, _) -> r.Config.name = "bhv") main_build
+    try List.find (fun (r, _) -> r.Config.name = "skylabs-fm") main_build
     with Not_found -> panic "No repo data for bhv."
   in hash
 
 let skylabs_fm_cloning : string -> string -> unit = fun indent destdir ->
   let cmd indent fmt = icmd (indent ^ "- ") fmt in
   cmd indent "git clone --depth 1 %s %s" (repo_url "${CI_JOB_TOKEN}" "FM/skylabs-fm") destdir;
-  cmd indent "git -C %s fetch --depth 1 --quiet origin %s" destdir bhv_hash;
-  cmd indent "git -C %s -c advice.detachedHead=false checkout %s" destdir bhv_hash
+  cmd indent "git -C %s fetch --depth 1 --quiet origin %s" destdir skylabs_fm_hash;
+  cmd indent "git -C %s -c advice.detachedHead=false checkout %s" destdir skylabs_fm_hash
 
 let main_job : unit -> unit = fun () ->
   line "full-build%s:" (if ref_build = None then "" else "-compare");
@@ -941,7 +941,7 @@ let opam_docker_install_job : unit -> unit = fun () ->
                 --secret type=env,id=CI_JOB_TOKEN \
                 --build-arg ROOT_COMMIT=%s \
                 --push \
-                -t %s ." token bhv_hash new_image_name;
+                -t %s ." token skylabs_fm_hash new_image_name;
   (* line "    - docker push %s" new_image_name; *)
   line "    - docker images";
   line "  artifacts:";
