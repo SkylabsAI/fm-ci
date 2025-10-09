@@ -14,7 +14,7 @@ main_llvm = 19
 # > vendored = <bool>
 #
 # Default values are:
-# - "gitlab" field: "formal-methods/<name>",
+# - "gitlab" field: "FM/<name>",
 # - "branch" field: "main",
 # - "path" field: "./fmdeps/<name>",
 # - "deps" field: [],
@@ -36,101 +36,102 @@ main_llvm = 19
 
 [repo.fm-ci]
 
-[repo.coq]
+[repo.rocq]
+gitlab = "FM/vendored/rocq"
 branch = "br-master"
 deps = ["fm-ci"]
+path = "./fmdeps/vendored/rocq"
 vendored = true
 
-[repo.stdlib]
+[repo.rocq-stdlib]
+gitlab = "FM/vendored/rocq-stdlib"
 branch = "br-master"
-deps = ["fm-ci", "coq"]
+deps = ["fm-ci", "rocq"]
+path = "./fmdeps/vendored/rocq-stdlib"
 vendored = true
 
 [repo.stdpp]
+gitlab = "FM/vendored/stdpp"
 branch = "br-master"
-deps = ["fm-ci", "stdlib"]
+deps = ["fm-ci", "rocq-stdlib"]
+path = "./fmdeps/vendored/stdpp"
 vendored = true
 
 [repo.iris]
+gitlab = "FM/vendored/iris"
 branch = "br-master"
 deps = ["fm-ci", "stdpp"]
+path = "./fmdeps/vendored/iris"
 vendored = true
 
 [repo.coq-ext-lib]
+gitlab = "FM/vendored/coq-ext-lib"
 branch = "br-master"
-deps = ["fm-ci", "stdlib"]
+deps = ["fm-ci", "coq-stdlib"]
+path = "./fmdeps/vendored/coq-ext-lib"
 vendored = true
 
 [repo.coq-equations]
+gitlab = "FM/vendored/coq-equations"
 branch = "br-main"
-deps = ["fm-ci", "stdlib"]
+deps = ["fm-ci", "coq-stdlib"]
+path = "./fmdeps/vendored/coq-equations"
 vendored = true
 
 [repo.elpi]
+gitlab = "FM/vendored/elpi"
 branch = "br-master"
 deps = ["fm-ci"]
+path = "./fmdeps/vendored/elpi"
 vendored = true
 
 [repo.coq-elpi]
+gitlab = "FM/vendored/coq-elpi"
 branch = "br-master"
-deps = ["fm-ci", "stdlib", "elpi"]
+deps = ["fm-ci", "coq-stdlib", "elpi"]
+path = "./fmdeps/vendored/coq-elpi"
 vendored = true
 
 [repo.coq-lsp]
+gitlab = "FM/vendored/coq-lsp"
 branch = "br-main"
-deps = ["fm-ci", "coq"]
+deps = ["fm-ci", "rocq"]
+path = "./fmdeps/vendored/coq-lsp"
 vendored = true
 
 [repo.vscoq]
+gitlab = "FM/vendored/vscoq"
 branch = "br-main"
-deps = ["fm-ci", "coq"]
+deps = ["fm-ci", "rocq"]
+path = "./fmdeps/vendored/vscoq"
 vendored = true
 
 [repo.fm-tools]
 deps = ["fm-ci"]
 
-[repo.cpp2v-core]
-gitlab = "cpp2v-core"
+[repo.BRiCk]
 branch = "master"
-deps = [
-  "fm-ci", "iris", "coq-elpi", "coq-equations",
-  "coq-ext-lib" # currently redundant, not worth removing
-]
+deps = ["fm-ci", "iris", "coq-elpi", "coq-equations"]
 
-[repo.cpp2v]
-gitlab = "cpp2v"
+[repo.auto]
 branch = "master"
-deps = [
-  "fm-ci", "cpp2v-core", "coq-ext-lib"
-]
+deps = ["fm-ci", "BRiCk", "coq-ext-lib"]
+
+[repo.auto-docs]
+deps = ["auto"]
 
 [repo.nova-interface]
-deps = [
-  "fm-ci", "cpp2v"
-]
-
-[repo.fm-docs]
-branch = "main"
-deps = [
-  "fm-ci", "cpp2v"
-]
-
-[repo.micro-docs]
-deps = [
-  "cpp2v"
-]
+gitlab = "FM/bluerock/nova-interface"
+deps = ["fm-ci", "auto"]
+path = "./bluerock/nova-interface"
 
 [repo.NOVA]
-gitlab = "NOVA"
-path = "./NOVA"
+gitlab = "FM/bluerock/NOVA"
 branch = "proof"
-deps = [
-  "fm-ci", "cpp2v"
-]
+deps = ["fm-ci", "nova-interface"]
+path = "./bluerock/NOVA"
 
 [repo.bhv]
-gitlab = "bhv"
-path = "."
-deps = [
-  "fm-ci", "cpp2v"
-]
+gitlab = "FM/bluerock/bhv"
+deps = ["fm-ci", "nova-interface", "NOVA"]
+path = "./bluerock/bhv"

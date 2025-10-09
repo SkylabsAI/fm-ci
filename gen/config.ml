@@ -107,7 +107,7 @@ let read_config : string -> config = fun file ->
           let gitlab =
             match !gitlab with
             | Some(gitlab) -> gitlab
-            | None         -> Format.sprintf "formal-methods/%s" name
+            | None         -> Format.sprintf "FM/%s" name
           in
           let bhv_path =
             match !bhv_path with

@@ -41,7 +41,7 @@ let get_trigger : unit -> trigger =
   let pipeline_source = getenv "ORIGIN_CI_PIPELINE_SOURCE" in
   let trigger_kind = getenv "FM_CI_TRIGGER_KIND" in
   let project_name =
-    let prefix = "bedrocksystems/" in
+    let prefix = "skylabs_ai/" in
     if not (String.starts_with ~prefix project_path) then
       panic "Project path %s does not start with %s." project_path prefix;
     let prefix_len = String.length prefix in
