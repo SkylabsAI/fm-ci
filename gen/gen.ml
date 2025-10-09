@@ -86,7 +86,7 @@ let _ =
 let ci_image : llvm:int -> string = fun ~llvm ->
   Printf.sprintf "fm-%s-llvm-%i" image_version llvm
 
-let registry = "registry.gitlab.com/skylabs_fm/fm/fm-ci"
+let registry = "registry.gitlab.com/skylabs_ai/fm/fm-ci"
 
 let with_registry : string -> string = fun image ->
   Printf.sprintf "%s:%s" registry image
