@@ -523,9 +523,9 @@ let bhv_hash : string =
     with Not_found -> panic "No repo data for bhv."
   in hash
 
-let bhv_cloning : string -> string -> unit = fun indent destdir ->
+let skylabs_fm_cloning : string -> string -> unit = fun indent destdir ->
   let cmd indent fmt = icmd (indent ^ "- ") fmt in
-  cmd indent "git clone --depth 1 %s %s" (repo_url "${CI_JOB_TOKEN}" "bhv") destdir;
+  cmd indent "git clone --depth 1 %s %s" (repo_url "${CI_JOB_TOKEN}" "FM/skylabs-fm") destdir;
   cmd indent "git -C %s fetch --depth 1 --quiet origin %s" destdir bhv_hash;
   cmd indent "git -C %s -c advice.detachedHead=false checkout %s" destdir bhv_hash
 
@@ -536,8 +536,8 @@ let main_job : unit -> unit = fun () ->
   line "    # Print environment for debug.";
   sect "    - " "Environment" (fun () ->
   line "    - env");
-  line "    # Initialize a bhv checkout.";
-  cmd  "    " bhv_cloning build_dir;
+  line "    # Initialize a skylabs-fm checkout.";
+  cmd  "    " skylabs_fm_cloning build_dir;
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   line "    # Create Directory structure for dune";
@@ -551,9 +551,6 @@ let main_job : unit -> unit = fun () ->
   end;
   line "    # Increase the stack size for large files.";
   line "    - ulimit -S -s 32768";
-  line "    # Install the python deps.";
-  sect "    - " "Install dependencies" (fun () ->
-  line "    - pip3 install -r python_requirements.txt");
   (* Checkout the commit hashes for the main build, and build. *)
   line "    #### MAIN BUILD ####";
   sect "    - " "Check out main branches" (fun () ->
@@ -563,68 +560,21 @@ let main_job : unit -> unit = fun () ->
   let failure_file = "/tmp/main_build_failure" in
   line "    - rm -rf %s" failure_file;
   sect "    - " "Build ASTs" (fun () ->
-  line "    - (./fm-build.py -b -j${NJOBS} @ast || (\
+  line "    - (make stage1 || (\
                 touch %s; echo \"MAIN BUILD FAILED AT THE AST STAGE\"))"
                 failure_file);
-  line "    - checksum_asts() { \
-                find _build/default -name '*_[ch]pp.v' -o \
-                  -name '*_[ch]pp_names.v' | \
-                grep -v 'zeta/apps/msc/src/.*build_id_cpp.v' | \
-                sort | xargs md5sum > ast_md5sums.txt; }";
-  line "    - checksum_asts";
-  line "    - cp ast_md5sums.txt $CI_PROJECT_DIR/ast_md5sums.txt";
-  if full_timing = `Full then begin
-  line "    # FM-3547: check AST generation is reproducible.";
-  line "    - mv ast_md5sums.txt ast_md5sums_v1.txt";
-  line "    - dune clean";
-  sect "    - " "Build ASTs" (fun () ->
-  line "    - (dune build @ast -j ${NJOBS} || (touch %s; \
-                echo \"MAIN BUILD FAILED AT THE SECOND AST STAGE\"))"
-                failure_file);
-  line "    - checksum_asts";
-  line "    - diff -su ast_md5sums_v1.txt ast_md5sums.txt"
-  end;
   line "    # Actual build.";
   line "    - dune build _build/install/default/bin/filter-dune-output";
-  if full_timing = `Full then begin
-  line "    - ((dune build -j ${NJOBS} @default @runtest 2>&1 | \
-                  _build/install/default/bin/filter-dune-output; \
-                make dune_check -j${NJOBS}) || (\
-                touch %s; echo \"MAIN BUILD FAILED AT THE BUILD STAGE\"))"
-                failure_file;
-  end else begin
-  line "    - ((dune build -j${NJOBS} \
-                @proof @fmdeps/default @NOVA/default @runtest 2>&1 | \
+  line "    - ((dune build -j${NJOBS} @all @runtest 2>&1 | \
                   _build/install/default/bin/filter-dune-output) \
                 || (\
                 touch %s; echo \"MAIN BUILD FAILED AT THE BUILD STAGE\"))"
                 failure_file;
-  end;
   line "    # Print information on the size of the _build directory.";
   line "    - du -hs _build";
   line "    - du -hc $(find _build -type f -name \"*.v\") | tail -n 1";
   line "    - du -hc $(find _build -type f -name \"*.vo\") | tail -n 1";
   line "    - du -hc $(find _build -type f -name \"*.glob\") | tail -n 1";
-  line "    # Compute FM stats.";
-  line "    - mkdir -p $CI_PROJECT_DIR/fm-stats/_build/default/apps/vswitch";
-  sect "    - " "stash.sh (all)" (fun () ->
-  line "    - ./support/fm/stats.sh _build/default /dev/null";
-  line "    - ./support/fm/stats2json.py -g . -i \
-                /tmp/_tmp_build-dir_full_spec_names.stats \
-                -o /tmp/spec_list.json";
-  line "    - ./support/fm/stats.sh -v _build/default /dev/null \
-                > _build_default.stats";
-  line "    - cp /tmp/*.stats $CI_PROJECT_DIR/fm-stats/_build/default";
-  line "    - cp /tmp/*.json $CI_PROJECT_DIR/fm-stats/_build/default";
-  line "    - rm /tmp/*.stats /tmp/*.json");
-  sect "    - " "stash.sh (vswitch)" (fun () ->
-  line "    - ./support/fm/stats.sh _build/default/apps/vswitch \
-                _build/default/zeta";
-  line "    - ./support/fm/stats.sh -v _build/default/apps/vswitch \
-                _build/default/zeta > _build_default_apps_vswitch.stats";
-  line "    - cp /tmp/*.stats \
-                $CI_PROJECT_DIR/fm-stats/_build/default/apps/vswitch";
-  line "    - cp *.stats $CI_PROJECT_DIR/fm-stats");
   line "    # Extract data.";
   line "    - find _build/ -name '*.vo'| sort | xargs md5sum \
                 > $CI_PROJECT_DIR/md5sums.txt";
@@ -656,9 +606,10 @@ let main_job : unit -> unit = fun () ->
   begin match ref_build with None -> () | Some(ref_build) ->
   (* Checkout the commit hashes for the reference build, and build. *)
   line "    #### REF BUILD ####";
-  line "    - make -sj ${NJOBS} gitclean > /dev/null";
-  sect "    - " "Check out reference bhv branch for cleaning" (fun () ->
-  cmd  "    - " checkout_command (fst (find_unique_config "bhv" ref_build)));
+  line "    - make -sj ${NJOBS} fmdeps-gitclean bluerock-gitclean > /dev/null";
+  line "    - git clean -xfd > /dev/null";
+  sect "    - " "Check out reference skylabs-fm branch for cleaning" (fun () ->
+  cmd  "    - " checkout_command (fst (find_unique_config "skylabs-fm" ref_build)));
   line "    # clean thoroughly in case the main branch introduced new vendored repos";
   line "    - git clean -ffxd";
   line "    - make -sj ${NJOBS} gitclean > /dev/null";
@@ -667,29 +618,11 @@ let main_job : unit -> unit = fun () ->
   line "    - make statusm | tee $CI_PROJECT_DIR/statusm_ref.txt";
   line "    # ASTs";
   sect "    - " "Build reference ASTs" (fun () ->
-  line "    - ./fm-build.py -b -j${NJOBS} @ast");
-  line "    - checksum_asts";
-  line "    - cp ast_md5sums.txt $CI_PROJECT_DIR/ast_md5sums_ref.txt";
-  if full_timing = `Full then begin
-  line "    # FM-3547: check AST generation is reproducible.";
-  line "    - mv ast_md5sums.txt ast_md5sums_v1.txt";
-  line "    - dune clean";
-  sect "    - " "Build ASTs (reference)" (fun () ->
-  line "    - dune build @ast -j ${NJOBS}");
-  line "    - checksum_asts";
-  line "    - diff -su ast_md5sums_v1.txt ast_md5sums.txt"
-  end;
+  line "    - make stage1");
   line "    # Actual build.";
   line "    - dune build _build/install/default/bin/filter-dune-output";
-  if full_timing = `Full then begin
-  line "    - (dune build -j ${NJOBS} @default @runtest 2>&1 | \
-                _build/install/default/bin/filter-dune-output; \
-                make dune_check -j${NJOBS})"
-  end else begin
-  line "    - (dune build -j${NJOBS} \
-                @proof @fmdeps/default @NOVA/default @runtest 2>&1 | \
-                  _build/install/default/bin/filter-dune-output)"
-  end;
+  line "    - (dune build -j${NJOBS} @all @runtest 2>&1 | \
+                  _build/install/default/bin/filter-dune-output)";
   line "    # Print information on the size of the _build directory.";
   line "    - du -hs _build";
   line "    - du -hc $(find _build -type f -name \"*.v\") | tail -n 1";
@@ -810,7 +743,7 @@ let cpp2v_core_llvm_job : int -> unit = fun llvm ->
   line "  script:";
   line "    # Print environment for debug.";
   line "    - env";
-  cmd  "    " bhv_cloning build_dir;
+  cmd  "    " skylabs_fm_cloning build_dir;
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
@@ -842,7 +775,7 @@ let cpp2v_core_public_job : int -> unit = fun llvm ->
   line "  script:";
   line "    # Print environment for debug.";
   line "    - env";
-  cmd  "    " bhv_cloning build_dir;
+  cmd  "    " skylabs_fm_cloning build_dir;
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
@@ -901,7 +834,7 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
   line "  script:";
   line "    # Print environment for debug.";
   line "    - env";
-  cmd  "    " bhv_cloning build_dir;
+  cmd  "    " skylabs_fm_cloning build_dir;
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
@@ -937,7 +870,7 @@ let proof_tidy : unit -> unit = fun () ->
   line "  script:";
   line "    # Print environment for debug.";
   line "    - env";
-  cmd  "    " bhv_cloning build_dir;
+  cmd  "    " skylabs_fm_cloning build_dir;
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
@@ -961,7 +894,7 @@ let fm_docs_job : unit -> unit = fun () ->
   line "  script:";
   line "    # Print environment for debug.";
   line "    - env";
-  cmd  "    " bhv_cloning build_dir;
+  cmd  "    " skylabs_fm_cloning build_dir;
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
@@ -1026,7 +959,7 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
     line "    # Print environment for debug.";
     sect "    - " "Environment" (fun () ->
     line "    - env");
-    cmd  "    " bhv_cloning build_dir;
+    cmd  "    " skylabs_fm_cloning build_dir;
     line "    - cd %s" build_dir;
     cmd  "    - " init_command;
     cmd  "    " Checkout.use_script ~name:"main";
