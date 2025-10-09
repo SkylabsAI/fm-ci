@@ -86,7 +86,7 @@ let _ =
 let ci_image : llvm:int -> string = fun ~llvm ->
   Printf.sprintf "fm-%s-llvm-%i" image_version llvm
 
-let registry = "registry.gitlab.com/bedrocksystems/formal-methods/fm-ci"
+let registry = "registry.gitlab.com/skylabs_fm/fm/fm-ci"
 
 let with_registry : string -> string = fun image ->
   Printf.sprintf "%s:%s" registry image
@@ -107,10 +107,10 @@ let main_branch : string -> string = fun project ->
 let gitlab_repo_base_url token =
   (* Only for use during testing! *)
   if token = "FAKE_TOKEN" then
-    "git@gitlab.com:bedrocksystems"
+    "git@gitlab.com:skylabs_ai"
   else
     Printf.sprintf
-      "https://gitlab-ci-token:%s@gitlab.com/bedrocksystems"
+      "https://gitlab-ci-token:%s@gitlab.com/skylabs_ai"
       token
 
 let repo_url token name =
@@ -475,7 +475,7 @@ end = struct
 end
 
 let artifacts_url =
-  let base = "https://bedrocksystems.gitlab.io/-/formal-methods/fm-ci/-" in
+  let base = "https://skylabs_ai.gitlab.io/-/FM/fm-ci/-" in
   Printf.sprintf "%s/jobs/${CI_JOB_ID}/artifacts" base
 
 (** The Docker {[image]} name must include the registry. *)
@@ -803,89 +803,6 @@ let main_job : unit -> unit = fun () ->
   line "    reports:";
   line "      codequality: gl-code-quality-report.json"
 
-let nova_job : unit -> unit = fun () ->
-  let (nova, (_, hashes)) =
-    try
-      List.find (fun (repo, _) -> repo.Config.name = "NOVA") repos_with_hashes
-    with Not_found -> panic "No config found for NOVA."
-  in
-  let nova_branch =
-    match hashes.mr_branch with
-    | None    -> nova.Config.main_branch
-    | Some(_) ->
-    let mr = match mr with None -> assert false | Some(mr) -> mr in
-    mr.Info.mr_source_branch_name
-  in
-  let gen_name =
-    let master_merge =
-      match mr with Some(_) -> false | None ->
-      let Info.{project_name; commit_branch; _} = trigger in
-      match commit_branch with
-      | None                -> false
-      | Some(commit_branch) -> main_branch project_name = commit_branch
-    in
-    "gen-installed-artifact" ^ (if master_merge then "" else "-mr")
-  in
-  line "";
-  line "%s:" gen_name;
-  common ~image:(with_registry main_image) ~dune_cache:true;
-  line "  script:";
-  line "    # Print environment for debug.";
-  line "    - env";
-  line "    # Save job ID since the current job creates the artifact.";
-  line "    - echo \"ARTIFACT_CI_JOB_ID=$CI_JOB_ID\" \
-                > $CI_PROJECT_DIR/build.env";
-  (* We only want fmdeps, so clone everything in a temporary directory. *)
-  line "    # Initialize a bhv checkout.";
-  let clone_dir = "/tmp/clone-dir" in
-  cmd  "    " bhv_cloning clone_dir;
-  line "    - cd %s" clone_dir;
-  cmd  "    - " init_command;
-  cmd  "    " Checkout.use_script ~name:"main";
-  line "    - make statusm | tee $CI_PROJECT_DIR/statusm.txt";
-  line "    - grep \"^fmdeps/\" $CI_PROJECT_DIR/statusm.txt \
-                > $CI_PROJECT_DIR/gitshas.txt";
-  (* Prepare the dune file structure for the cache. *)
-  line "    # Create Directory structure for dune";
-  line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - cp support/fm/dune_config ~/.config/dune/config";
-  (* Prepare and move to the build directory. *)
-  line "    # Build directory preparation.";
-  line "    - mkdir %s" build_dir;
-  line "    - mv fmdeps dune-workspace %s/" build_dir;
-  line "    - cd %s" build_dir;
-  (* Build and create installed artifact. *)
-  line "    # Build.";
-  line "    - dune build _build/install/default/bin/filter-dune-output";
-  line "    - dune build -j ${NJOBS} @install 2>&1 | \
-                _build/install/default/bin/filter-dune-output";
-  line "    # Prepare installed artifact.";
-  line "    - rm -rf $CI_PROJECT_DIR/fm-install";
-  line "    - mkdir $CI_PROJECT_DIR/fm-install";
-  line "    - dune install --prefix=$CI_PROJECT_DIR/fm-install \
-                --display=quiet";
-  line "    - find $CI_PROJECT_DIR/fm-install -name '*.v' -o -name '*.ml' | while read i; do > $i; done";
-  line "  artifacts:";
-  line "    when: always";
-  line "    expose_as: \"installed fmdeps\"";
-  line "    name: cpp2v";
-  line "    paths:";
-  line "      - fm-install";
-  line "      - gitshas.txt";
-  line "    reports:";
-  line "      dotenv: build.env";
-  line "";
-  line "NOVA-trigger:";
-  line "  needs:";
-  line "    - %s" gen_name;
-  line "  variables:";
-  line "    UPSTREAM_IMAGE: \"%s\"" main_image;
-  line "    UPSTREAM_CI_JOB_ID: $ARTIFACT_CI_JOB_ID";
-  line "  trigger:";
-  line "    project: bedrocksystems/NOVA";
-  line "    branch: %s" nova_branch;
-  line "    strategy: depend"
-
 let cpp2v_core_llvm_job : int -> unit = fun llvm ->
   line "";
   line "cpp2v-llvm-%i:" llvm;
@@ -960,7 +877,7 @@ let cpp2v_core_pages_publish : unit -> unit = fun () ->
   line "    - git config --global user.name \"${BRICK_BOT_USERNAME}\"";
   line "    - git clone \
                 https://${BRICK_BOT_USERNAME}:${BRICK_BOT_TOKEN}@\
-                gitlab.com/bedrocksystems/cpp2v-core.git";
+                gitlab.com/skylabs_ai/fm/BRiCk.git";
   line "    - cd cpp2v-core";
   line "    - git checkout gh-pages";
   line "    - git rm -r docs";
@@ -1175,7 +1092,6 @@ let output_config : unit -> unit = fun () ->
       (* Triggered NOVA build.
         NOTE: We must always rebuild the NOVA artifact if we are in a "default"
         trigger. The artifacts of these jobs are relied upon by NOVA CI. *)
-      if trigger.trigger_kind = "default" || needs_full_build "NOVA" then nova_job ();
       (* fm-docs build *)
       if trigger.trigger_kind = "default" || needs_full_build "fm-docs" then begin
         fm_docs_job ()
