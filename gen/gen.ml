@@ -542,7 +542,8 @@ let main_job : unit -> unit = fun () ->
   cmd  "    - " init_command;
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - echo '(lang dune 3.8)\\n(display short)' > ~/.config/dune/config";
+  line "    - echo '(lang dune 3.8)'  > ~/.config/dune/config";
+  line "    - echo '(display short)' >> ~/.config/dune/config";
   line "    - rm -rf _build";
   (* Trim the dune cache if necessary. *)
   if trigger.trim_dune_cache then begin
