@@ -555,7 +555,7 @@ let main_job : unit -> unit = fun () ->
   line "    #### MAIN BUILD ####";
   sect "    - " "Check out main branches" (fun () ->
   cmd  "    " Checkout.use_script ~name:"main");
-  line "    - make statusm | tee $CI_PROJECT_DIR/statusm.txt";
+  line "    - make describe | tee $CI_PROJECT_DIR/statusm.txt";
   line "    # ASTs";
   let failure_file = "/tmp/main_build_failure" in
   line "    - rm -rf %s" failure_file;
@@ -615,7 +615,7 @@ let main_job : unit -> unit = fun () ->
   line "    - make -sj ${NJOBS} gitclean > /dev/null";
   sect "    - " "Check out all reference branches" (fun () ->
   cmd  "    " Checkout.use_script ~name:"ref");
-  line "    - make statusm | tee $CI_PROJECT_DIR/statusm_ref.txt";
+  line "    - make describe | tee $CI_PROJECT_DIR/statusm_ref.txt";
   line "    # ASTs";
   sect "    - " "Build reference ASTs" (fun () ->
   line "    - make stage1");
@@ -643,7 +643,7 @@ let main_job : unit -> unit = fun () ->
   sect "    - " "Check out main branches (again)" (fun () ->
   cmd  "    " Checkout.use_script ~name:"main");
   cmd  "    - " init_command;
-  line "    - make statusm";
+  line "    - make describe";
   line "    - make ast-prepare";
   line "    - dune build fmdeps/cpp2v-core/rocq-tools";
   line "    - mv $CI_PROJECT_DIR/perf-data perf-data";
@@ -747,7 +747,7 @@ let cpp2v_core_llvm_job : int -> unit = fun llvm ->
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
-  line "    - make statusm";
+  line "    - make describe";
   (* Prepare the dune file structure for the cache. *)
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
@@ -779,7 +779,7 @@ let cpp2v_core_public_job : int -> unit = fun llvm ->
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
-  line "    - make statusm";
+  line "    - make describe";
   (* Prepare the dune file structure for the cache. *)
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
@@ -838,7 +838,7 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
   line "    - cd %s" build_dir;
   cmd  "    - " init_command;
   cmd  "    " Checkout.use_script ~name:"main";
-  line "    - make statusm";
+  line "    - make describe";
   (* Prepare the dune file structure for the cache. *)
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
@@ -860,33 +860,6 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
     project_name = "cpp2v-core" && main_branch "cpp2v-core" = commit_branch
   in
   if publish then cpp2v_core_pages_publish ()
-
-(* TODO (FM-4443): generalize to:
-   1) run on all [.v] artifacts
-   2) produce a code quality report that is consumeable by gitlab. *)
-let proof_tidy : unit -> unit = fun () ->
-  line "proof-tidy:";
-  common ~image:(with_registry main_image) ~dune_cache:true;
-  line "  script:";
-  line "    # Print environment for debug.";
-  line "    - env";
-  cmd  "    " skylabs_fm_cloning build_dir;
-  line "    - cd %s" build_dir;
-  cmd  "    - " init_command;
-  cmd  "    " Checkout.use_script ~name:"main";
-  line "    - make statusm";
-  line "    # Apply structured linting policies to portions of the vSwitch";
-  line "    - python3 ./fmdeps/fm-ci/fm-linter/coq_lint.py \
-                --use-ci-output-format \
-                --proof-dirs apps/vswitch/lib/forwarding/proof/ \
-                apps/vswitch/lib/port/proof/ \
-                # apps/vswitch/lib/vswitch/proof/";
-  line "    # Apply a generic linting policy to all child [.v] files, \
-                enforcing avoidance of imports/exports written using [From]";
-  line "    - python3 ./fmdeps/fm-ci/fm-linter/coq_lint.py \
-                --use-ci-output-format apps/vswitch";
-  line "    - python3 ./fmdeps/fm-ci/fm-linter/coq_lint.py
-                --use-ci-output-format apps/vmm/"
 
 let fm_docs_job : unit -> unit = fun () ->
   line "fm-docs:";
@@ -1018,11 +991,6 @@ let output_config : unit -> unit = fun () ->
       main_job ();
       (* Stop here if we only want the full job. *)
       match trigger.only_full_build with true -> () | false ->
-      (* Proof tidy job. *)
-      proof_tidy ();
-      (* Triggered NOVA build.
-        NOTE: We must always rebuild the NOVA artifact if we are in a "default"
-        trigger. The artifacts of these jobs are relied upon by NOVA CI. *)
       (* fm-docs build *)
       if trigger.trigger_kind = "default" || needs_full_build "fm-docs" then begin
         fm_docs_job ()
@@ -1031,7 +999,6 @@ let output_config : unit -> unit = fun () ->
       if needs_full_build "cpp2v-core" then begin
         cpp2v_core_llvm_job 18;
         cpp2v_core_llvm_job 20;
-        (*cpp2v_core_public_job oc "16";*)
         cpp2v_core_pages_job ();
       end
     end
