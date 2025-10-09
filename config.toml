@@ -67,14 +67,14 @@ vendored = true
 [repo.coq-ext-lib]
 gitlab = "FM/vendored/coq-ext-lib"
 branch = "br-master"
-deps = ["fm-ci", "coq-stdlib"]
+deps = ["fm-ci", "rocq-stdlib"]
 path = "./fmdeps/vendored/coq-ext-lib"
 vendored = true
 
 [repo.coq-equations]
 gitlab = "FM/vendored/coq-equations"
 branch = "br-main"
-deps = ["fm-ci", "coq-stdlib"]
+deps = ["fm-ci", "rocq-stdlib"]
 path = "./fmdeps/vendored/coq-equations"
 vendored = true
 
@@ -88,7 +88,7 @@ vendored = true
 [repo.coq-elpi]
 gitlab = "FM/vendored/coq-elpi"
 branch = "br-master"
-deps = ["fm-ci", "coq-stdlib", "elpi"]
+deps = ["fm-ci", "rocq-stdlib", "elpi"]
 path = "./fmdeps/vendored/coq-elpi"
 vendored = true
 
@@ -119,6 +119,10 @@ deps = ["fm-ci", "BRiCk", "coq-ext-lib"]
 
 [repo.auto-docs]
 deps = ["auto"]
+
+[repo.skylabs-fm]
+deps = ["auto"]
+path = "."
 
 [repo.nova-interface]
 gitlab = "FM/bluerock/nova-interface"
