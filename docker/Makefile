@@ -1,5 +1,5 @@
 DOCKER_REGISTRY ?= registry.gitlab.com
-DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabs_ai/fm/skylabs-fm
+DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabs_ai/fm/fm-ci
 
 # DOCKER_REGISTRY ?= ghcr.io
 # DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabsai/skylabs-fm
