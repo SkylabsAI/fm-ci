@@ -556,7 +556,7 @@ let main_job : unit -> unit = fun () ->
   line "    #### MAIN BUILD ####";
   sect "    - " "Check out main branches" (fun () ->
   cmd  "    " Checkout.use_script ~name:"main");
-  line "    - make describe | tee $CI_PROJECT_DIR/statusm.txt";
+  line "    - make describe | tee $CI_PROJECT_DIR/commits.txt";
   line "    # ASTs";
   let failure_file = "/tmp/main_build_failure" in
   line "    - rm -rf %s" failure_file;
@@ -616,7 +616,7 @@ let main_job : unit -> unit = fun () ->
   line "    - make -sj ${NJOBS} gitclean > /dev/null";
   sect "    - " "Check out all reference branches" (fun () ->
   cmd  "    " Checkout.use_script ~name:"ref");
-  line "    - make describe | tee $CI_PROJECT_DIR/statusm_ref.txt";
+  line "    - make describe | tee $CI_PROJECT_DIR/commits_ref.txt";
   line "    # ASTs";
   sect "    - " "Build reference ASTs" (fun () ->
   line "    - make stage1");
@@ -716,14 +716,14 @@ let main_job : unit -> unit = fun () ->
   line "    expose_as: \"build artifact\"";
   line "    name: main_artifacts";
   line "    paths: ";
-  line "      - statusm.txt";
+  line "      - commits.txt";
   line "      - ast_md5sums.txt";
   line "      - md5sums.txt";
   line "      - fm-stats";
   line "      - hint-data.csv";
   line "      - perf_summary.csv";
   if ref_build <> None then begin
-  line "      - statusm_ref.txt";
+  line "      - commits_ref.txt";
   line "      - ast_md5sums_ref.txt";
   line "      - md5sums_ref.txt";
   line "      - perf-report";
@@ -862,23 +862,6 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
   in
   if publish then cpp2v_core_pages_publish ()
 
-let fm_docs_job : unit -> unit = fun () ->
-  line "fm-docs:";
-  common ~image:(with_registry main_image) ~dune_cache:true;
-  line "  script:";
-  line "    # Print environment for debug.";
-  line "    - env";
-  cmd  "    " skylabs_fm_cloning build_dir;
-  line "    - cd %s" build_dir;
-  cmd  "    - " init_command;
-  cmd  "    " Checkout.use_script ~name:"main";
-  line "    - make statusm";
-  line "    # Increase the stack size for large files.";
-  line "    - ulimit -S -s 32768";
-  sect "    - " "Initialize checkout" (fun () ->
-  line "    - ./fm-build.py -b -j${NJOBS}");
-  line "    - ./fmdeps/fm-docs/ci-build.sh"
-
 let docker_img_version = "27.3.1"
 let docker_img = Printf.sprintf "docker:%s" docker_img_version
 
@@ -886,7 +869,6 @@ let docker_services : unit -> unit = fun () ->
   line "  services:";
   line "    - docker:%s-dind" docker_img_version
 
-(* XXX lens *)
 let with_skylabs_fm_path skylabs_fm_path (config, hash) =
   (Config.{config with skylabs_fm_path}, hash)
 
@@ -935,24 +917,21 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
     line "    - cd %s" build_dir;
     cmd  "    - " init_command;
     cmd  "    " Checkout.use_script ~name:"main";
-    line "    - make statusm";
+    line "    - make describe";
     line "    # Increase the stack size for large files.";
     line "    - ulimit -S -s 32768";
-    line "    - make ast-prepare";
-    (* XXX
-    Everything above is duplicated from fm_docs_job etc.,
-    and close to cpp2v_core_pages_job, cpp2v_core_pages_job *)
+    line "    - make stage1";
     line "    - opam option depext=false";
     line "    - opam update -y";
     line "    - opam repo add archive git+https://github.com/ocaml/opam-repository-archive";
     line "    - opam pin add -y -k rsync --recursive -n --with-version dev .";
     if do_full_opam then begin
       line "    - opam install -y coq";
-      line "    - (for i in $(opam pin | grep cpp2v-core/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
+      line "    - (for i in $(opam pin | grep BRiCk/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
       line "    - opam install -y rocq-bluerock-brick";
-      line "    - (for i in $(opam pin | grep cpp2v/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
+      line "    - (for i in $(opam pin | grep auto/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
     end else
-      line "    - opam install -y $(opam pin | grep -E '/fmdeps/(cpp2v|vscoq|coq-lsp)' | awk '{print $1}')"
+      line "    - opam install -y $(opam pin | grep -E '/fmdeps/(auto|vendored/(vscoq|coq-lsp))' | awk '{print $1}')"
   end else begin
     line "    - exit 0";
   end
@@ -992,10 +971,6 @@ let output_config : unit -> unit = fun () ->
       main_job ();
       (* Stop here if we only want the full job. *)
       match trigger.only_full_build with true -> () | false ->
-      (* fm-docs build *)
-      if trigger.trigger_kind = "default" || needs_full_build "fm-docs" then begin
-        fm_docs_job ()
-      end;
       (* Extra cpp2v-core builds. *)
       if needs_full_build "BRiCk" then begin
         cpp2v_core_llvm_job 18;
