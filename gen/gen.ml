@@ -997,7 +997,7 @@ let output_config : unit -> unit = fun () ->
         fm_docs_job ()
       end;
       (* Extra cpp2v-core builds. *)
-      if needs_full_build "cpp2v-core" then begin
+      if needs_full_build "BRiCk" then begin
         cpp2v_core_llvm_job 18;
         cpp2v_core_llvm_job 20;
         cpp2v_core_pages_job ();
