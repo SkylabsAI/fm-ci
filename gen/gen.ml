@@ -644,8 +644,8 @@ let main_job : unit -> unit = fun () ->
   cmd  "    " Checkout.use_script ~name:"main");
   cmd  "    - " init_command;
   line "    - make describe";
-  line "    - make ast-prepare";
-  line "    - dune build fmdeps/cpp2v-core/rocq-tools";
+  line "    - make stage1";
+  line "    - dune build fmdeps/BRiCk/rocq-tools";
   line "    - mv $CI_PROJECT_DIR/perf-data perf-data";
   line "    - mv $CI_PROJECT_DIR/perf-data_ref perf-data_ref";
   line "    - cp perf-data/perf_summary.csv \
@@ -752,9 +752,9 @@ let cpp2v_core_llvm_job : int -> unit = fun llvm ->
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
   line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
-  (* Build cpp2v-core including tests. *)
+  (* Build BRiCk including tests. *)
   line "    # Build.";
-  line "    - make ast-prepare";
+  line "    - make stage1";
   (* Make sure the rocq binary is available.
      This is necessary to ensure that our wrappers are functional.
      We cannot tell dune about the dependency of coqc_perf on rocq
@@ -762,10 +762,10 @@ let cpp2v_core_llvm_job : int -> unit = fun llvm ->
      a binary called coqc, which is the name under which coqc_perf
      will be used.
   *)
-  line "    - dune build @fmdeps/coq/install";
+  line "    - dune build @fmdeps/vendored/rocq/install";
   line "    - dune build _build/install/default/bin/filter-dune-output";
   line "    - dune build -j ${NJOBS} \
-                fmdeps/cpp2v-core @fmdeps/cpp2v-core/runtest 2>&1 | \
+                fmdeps/BRiCk @fmdeps/BRiCk/runtest 2>&1 | \
                 _build/install/default/bin/filter-dune-output"
 
 let cpp2v_core_public_job : int -> unit = fun llvm ->
@@ -786,12 +786,12 @@ let cpp2v_core_public_job : int -> unit = fun llvm ->
   line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
   (* Pin the packages. *)
   line "    # Pin the packages and install.";
-  line "    - opam pin add -n -y coq-upoly.dev ./fmdeps/cpp2v-core/coq-upoly";
-  line "    - opam pin add -n -y coq-cpp2v.dev ./fmdeps/cpp2v-core";
-  line "    - opam pin add -n -y coq-cpp2v-bin.dev ./fmdeps/cpp2v-core";
-  line "    - opam pin add -n -y coq-lens.dev ./fmdeps/cpp2v-core/coq-lens";
+  line "    - opam pin add -n -y coq-upoly.dev ./fmdeps/BRiCk/coq-upoly";
+  line "    - opam pin add -n -y coq-cpp2v.dev ./fmdeps/BRiCk";
+  line "    - opam pin add -n -y coq-cpp2v-bin.dev ./fmdeps/BRiCk";
+  line "    - opam pin add -n -y coq-lens.dev ./fmdeps/BRiCk/coq-lens";
   line "    - opam pin add -n -y coq-lens-elpi.dev \
-                ./fmdeps/cpp2v-core/coq-lens";
+                ./fmdeps/BRiCK/coq-lens";
   line "    - opam install --assume-depexts -y \
                 coq-upoly coq-cpp2v coq-cpp2v-bin coq-lens coq-lens-elpi"
 [@@warning "-32"]
@@ -811,7 +811,7 @@ let cpp2v_core_pages_publish : unit -> unit = fun () ->
   line "    - git clone \
                 https://${BRICK_BOT_USERNAME}:${BRICK_BOT_TOKEN}@\
                 gitlab.com/skylabs_ai/fm/BRiCk.git";
-  line "    - cd cpp2v-core";
+  line "    - cd BRiCk";
   line "    - git checkout gh-pages";
   line "    - git rm -r docs";
   line "    - mv ../html docs";
@@ -845,19 +845,19 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
   line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
   (* Build the pages. *)
   line "    # Build the pages.";
-  line "    - make ast-prepare";
-  line "    - cd fmdeps/cpp2v-core";
+  line "    - make stage1";
+  line "    - cd fmdeps/BRiCk";
   line "    - git submodule update --init";
   line "    - make -j ${NJOBS} doc";
   line "    - mv doc/sphinx/_build/html $CI_PROJECT_DIR/html";
   line "  artifacts:";
   line "    paths:";
   line "      - html";
-  (* Only publish the pages on master branch pipelines from cpp2v-core. *)
+  (* Only publish the pages on master branch pipelines from BRiCk. *)
   let publish =
     let Info.{project_name; commit_branch; _} = trigger in
     match commit_branch with None -> false | Some(commit_branch) ->
-    project_name = "cpp2v-core" && main_branch "cpp2v-core" = commit_branch
+    project_name = "BRiCk" && main_branch "BRiCk" = commit_branch
   in
   if publish then cpp2v_core_pages_publish ()
 
@@ -970,7 +970,7 @@ let output_config : unit -> unit = fun () ->
       main_job ();
       (* Stop here if we only want the full job. *)
       match trigger.only_full_build with true -> () | false ->
-      (* Extra cpp2v-core builds. *)
+      (* Extra BRiCk builds. *)
       if needs_full_build "BRiCk" then begin
         cpp2v_core_llvm_job 18;
         cpp2v_core_llvm_job 20;
