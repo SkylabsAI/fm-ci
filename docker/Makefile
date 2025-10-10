@@ -1,3 +1,6 @@
+# Pick default bash, even if it's installed with Homebrew.
+SHELL := $(shell which bash)
+
 DOCKER_REGISTRY ?= registry.gitlab.com
 DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabs_ai/fm/fm-ci
 
