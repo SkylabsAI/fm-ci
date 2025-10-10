@@ -542,8 +542,7 @@ let main_job : unit -> unit = fun () ->
   cmd  "    - " init_command;
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - echo '(lang dune 3.8)'  > ~/.config/dune/config";
-  line "    - echo '(display short)' >> ~/.config/dune/config";
+  line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
   line "    - rm -rf _build";
   (* Trim the dune cache if necessary. *)
   if trigger.trim_dune_cache then begin
@@ -752,7 +751,7 @@ let cpp2v_core_llvm_job : int -> unit = fun llvm ->
   (* Prepare the dune file structure for the cache. *)
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - cp support/fm/dune_config ~/.config/dune/config";
+  line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
   (* Build cpp2v-core including tests. *)
   line "    # Build.";
   line "    - make ast-prepare";
@@ -784,7 +783,7 @@ let cpp2v_core_public_job : int -> unit = fun llvm ->
   (* Prepare the dune file structure for the cache. *)
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - cp support/fm/dune_config ~/.config/dune/config";
+  line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
   (* Pin the packages. *)
   line "    # Pin the packages and install.";
   line "    - opam pin add -n -y coq-upoly.dev ./fmdeps/cpp2v-core/coq-upoly";
@@ -843,7 +842,7 @@ let cpp2v_core_pages_job : unit -> unit = fun () ->
   (* Prepare the dune file structure for the cache. *)
   line "    # Create Directory structure for dune";
   line "    - mkdir -p ~/.cache/ ~/.config/dune/";
-  line "    - cp support/fm/dune_config ~/.config/dune/config";
+  line "    - cp fmdeps/fm-ci/ci/dune_config ~/.config/dune/config";
   (* Build the pages. *)
   line "    # Build the pages.";
   line "    - make ast-prepare";
