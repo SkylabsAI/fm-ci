@@ -919,7 +919,6 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
     line "    - make describe";
     line "    # Increase the stack size for large files.";
     line "    - ulimit -S -s 32768";
-    line "    - make stage1";
     line "    - opam option depext=false";
     line "    - opam update -y";
     line "    - opam repo add archive git+https://github.com/ocaml/opam-repository-archive";
