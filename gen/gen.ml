@@ -920,6 +920,8 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
     line "    # Increase the stack size for large files.";
     line "    - ulimit -S -s 32768";
     line "    - opam option depext=false";
+    line "    - opam repo remove iris-dev";
+    line "    - opam repo remove coq-released";
     line "    - opam update -y";
     line "    - opam pin add -y -k rsync --recursive -n --with-version dev .";
     if do_full_opam then begin
