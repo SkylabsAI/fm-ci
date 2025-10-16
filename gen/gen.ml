@@ -929,8 +929,9 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
       line "    - (for i in $(opam pin | grep BRiCk/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
       line "    - opam install -y rocq-bluerock-brick";
       line "    - (for i in $(opam pin | grep auto/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
-    end else
+    end else begin
       line "    - opam install -y $(opam pin | grep -E '/fmdeps/(auto|vendored/(vscoq|coq-lsp))' | awk '{print $1}')"
+    end
   end else begin
     line "    - exit 0";
   end
