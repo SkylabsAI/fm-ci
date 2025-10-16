@@ -908,6 +908,7 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
   line "opam-install-build:";
   common ~image:(with_registry main_image) ~dune_cache:true;
   line "  script:";
+  line "    - error=0";
   if do_opam then begin
     line "    # Print environment for debug.";
     sect "    - " "Environment" (fun () ->
@@ -923,18 +924,24 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
     line "    - opam repo remove iris-dev";
     line "    - opam repo remove coq-released";
     line "    - opam update -y";
+    line "    - opam pin";
+    line "    - opam list";
+    line "    - opam show --raw coq-iris || true";
+    line "    - opam show --raw coq || true";
     line "    - opam pin add -y -k rsync --recursive -n --with-version dev .";
+    line "    - opam pin";
+    line "    - rm -rf ~/.opam/log/";
     if do_full_opam then begin
       line "    - opam install -y coq";
       line "    - (for i in $(opam pin | grep BRiCk/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
       line "    - opam install -y rocq-bluerock-brick";
       line "    - (for i in $(opam pin | grep auto/ | awk '{print $1}'); do opam install -y $i && opam uninstall -a -y $i || exit 1; done)";
     end else begin
-      line "    - opam install -y $(opam pin | grep -E '/fmdeps/(auto|vendored/(vscoq|coq-lsp))' | awk '{print $1}')"
-    end
-  end else begin
-    line "    - exit 0";
-  end
+      line "    - opam install -y $(opam pin | grep -E '/fmdeps/(auto|vendored/(vscoq|coq-lsp))' | awk '{print $1}'); error=$?"
+    end;
+    line "    - for i in ~/.opam/log/rocq-elpi-*.out; do echo -e \"\\n\\n$i\\n\"; cat $i; done";
+  end;
+  line "    - exit $error"
 
 let skip_proof_job : unit -> unit = fun () ->
   line "skip-proof-job:";
