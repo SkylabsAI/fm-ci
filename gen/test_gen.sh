@@ -25,7 +25,7 @@ mv -f test_out.yaml test_out_old.yaml
 [ -z "${CI_JOB_TOKEN}" ] && CI_JOB_TOKEN=FAKE_TOKEN
 
 ORIGIN_CI_PROJECT_TITLE=BHV \
-  ORIGIN_CI_PROJECT_PATH=bedrocksystems/bhv \
+  ORIGIN_CI_PROJECT_PATH=skylabs_ai/FM/skylabs-fm \
   ORIGIN_CI_COMMIT_SHA=`git rev-parse HEAD` \
   ORIGIN_CI_COMMIT_BRANCH=main \
   ORIGIN_CI_PIPELINE_SOURCE=default \

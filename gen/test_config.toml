@@ -11,18 +11,25 @@ branch = "br-master"
 deps = ["fm-ci"]
 vendored = true
 
-[repo.cpp2v-core]
-gitlab = "cpp2v-core"
+[repo.BRiCk]
 branch = "master"
 deps = ["fm-ci", "stdpp"]
 
-[repo.bhv]
-gitlab = "bhv"
+[repo.skylabs-fm]
 path = "."
-deps = [ "fm-ci", "stdpp", "cpp2v-core" ]
+
+[repo.auto]
+branch = "master"
+deps = ["fm-ci", "BRiCk"]
+
+[repo.nova-interface]
+gitlab = "FM/bluerock/nova-interface"
+branch = "skylabs-main"
+deps = ["fm-ci", "auto"]
+path = "./bluerock/nova-interface"
 
 [repo.NOVA]
-gitlab = "NOVA"
-path = "./NOVA"
-branch = "proof"
-deps = [ "fm-ci", "stdpp", "cpp2v-core" ]
+gitlab = "FM/bluerock/NOVA"
+branch = "skylabs-proof"
+deps = ["fm-ci", "nova-interface"]
+path = "./bluerock/NOVA"
