@@ -939,8 +939,7 @@ let opam_install_job do_opam do_full_opam : unit -> unit = fun () ->
     end else begin
       line "    - opam install -y coq-core";
       line "    - opam install -y rocq-elpi && opam install -y $(opam pin | grep -E '/fmdeps/(auto|vendored/(vscoq|coq-lsp))' | awk '{print $1}'); error=$?";
-    end;
-    line "    - for i in ~/.opam/log/rocq-elpi-*.out; do echo -e \"\\n\\n$i\\n\"; cat $i; done";
+    end
   end;
   line "    - exit $error"
 
