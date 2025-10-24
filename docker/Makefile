@@ -2,10 +2,7 @@
 SHELL := $(shell which bash)
 
 DOCKER_REGISTRY ?= ghcr.io
-DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabsai/skylabs-fm
-
-REGISTRY ?= $(DOCKER_REGISTRY)
-BR_REGISTRY ?= $(DOCKER_SKYLABS_FM_REGISTRY)
+DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/skylabs-fm
 
 BR_FMDEPS_VERSION ?= 2025-10-10
 FM_RELEASE_FULL_VERSION = 2025-10-10
@@ -67,7 +64,7 @@ fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/
 	@echo "[DOCKER] Building $$@"
 	$$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
-		-t $$(BR_REGISTRY):$$@ \
+		-t $$(DOCKER_REPO):$$@ \
 		--build-arg BR_FMDEPS_VERSION=$$(BR_FMDEPS_VERSION) \
 		--build-arg BR_IMAGE_VERSION=$$(BR_IMAGE_VERSION) \
 		--build-arg BR_LLVM_MAJ_VER=$1 \
@@ -77,7 +74,7 @@ DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
 run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 	@echo "[DOCKER] Running $$<"
-	$$(Q)docker run -i -t $$(BR_REGISTRY):$$<
+	$$(Q)docker run -i -t $$(DOCKER_REPO):$$<
 .PHONY: run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
@@ -85,10 +82,10 @@ push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 	@echo "[DOCKER] Pushing $$<"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
 	@echo "(Let's hope you did not mess anything up...)"
-	$$(Q)docker push $$(BR_REGISTRY):$$<
+	$$(Q)docker push $$(DOCKER_REPO):$$<
 else
 	@echo "The command that would run would be:"
-	@echo "  docker push $$(BR_REGISTRY):$$<"
+	@echo "  docker push $$(DOCKER_REPO):$$<"
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
 endif
 .PHONY: push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
@@ -114,22 +111,22 @@ DEFAULT_TAG := fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
 
 tag-default: $(DEFAULT_TAG)
 	@echo "[DOCKER] Tagging $< as fm-default"
-	@docker image tag $(BR_REGISTRY):$< $(BR_REGISTRY):fm-default
+	@docker image tag $(DOCKER_REPO):$< $(DOCKER_REPO):fm-default
 .PHONY: tag-default
 
 run-default: tag-default
 	@echo "[DOCKER] Running fm-default"
-	$(Q)docker run -i -t $(BR_REGISTRY):fm-default
+	$(Q)docker run -i -t $(DOCKER_REPO):fm-default
 .PHONY: run-default
 
 push-default: tag-default
 	@echo "[DOCKER] Pushing tag fm-default"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
 	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(BR_REGISTRY):fm-default
+	$(Q)docker push $(DOCKER_REPO):fm-default
 else
 	@echo "The command that would run would be:"
-	@echo "  docker push $(BR_REGISTRY):fm-default"
+	@echo "  docker push $(DOCKER_REPO):fm-default"
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
 endif
 
@@ -146,11 +143,11 @@ gitlab-token:
 	@read -r TOKEN; echo $$TOKEN > $@
 
 login: gitlab-login gitlab-token
-	$(Q)docker login -u $$(cat $<) --password-stdin $(REGISTRY) < gitlab-token
+	$(Q)docker login -u $$(cat $<) --password-stdin $(DOCKER_REGISTRY) < gitlab-token
 .PHONY: login
 
 logout:
-	$(Q)docker logout $(REGISTRY)
+	$(Q)docker logout $(DOCKER_REGISTRY)
 .PHONY: logout
 
 monorepo_parent=../../../..
@@ -171,31 +168,31 @@ build-release: prepare-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_REPO="$(DOCKER_SKYLABS_FM_REGISTRY)" \
+		--build-arg BASE_REPO="$(DOCKER_REPO)" \
 		--build-arg BASE_TAG=fm-default \
-		-t $(BR_REGISTRY):$(RELEASE_TAG) \
+		-t $(DOCKER_REPO):$(RELEASE_TAG) \
 		.
 
 .PHONY: run-release
 run-release: build-release
 	@echo "[DOCKER] Running fm-release"
-	$(Q)docker run -i -t $(BR_REGISTRY):$(RELEASE_TAG)
+	$(Q)docker run -i -t $(DOCKER_REPO):$(RELEASE_TAG)
 
 push-release: build-release
 	@echo "[DOCKER] Pushing fm-release"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
 	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(BR_REGISTRY):$(RELEASE_TAG)
+	$(Q)docker push $(DOCKER_REPO):$(RELEASE_TAG)
 else
 	@echo "The command that would run would be:"
-	@echo "  docker push $(BR_REGISTRY):$(RELEASE_TAG)"
+	@echo "  docker push $(DOCKER_REPO):$(RELEASE_TAG)"
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
 endif
 
 .PHONY: push-release
 
 pull-release:
-	$(Q)docker pull $(BR_REGISTRY):$(RELEASE_TAG)
+	$(Q)docker pull $(DOCKER_REPO):$(RELEASE_TAG)
 
 .PHONY: pull-release
 
@@ -207,7 +204,7 @@ name-release:
 	@echo $(FM_RELEASE_TARBALL_NAME)
 
 $(FM_RELEASE_TARBALL_NAME).tar.gz:
-	docker save $(BR_REGISTRY):$(RELEASE_TAG) | $(PV) | gzip > "$@"
+	docker save $(DOCKER_REPO):$(RELEASE_TAG) | $(PV) | gzip > "$@"
 
 pack-release: $(FM_RELEASE_TARBALL_NAME).tar.gz
 .PHONY: pack-release
