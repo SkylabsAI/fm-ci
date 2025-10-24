@@ -52,7 +52,7 @@ files/_dune-project: ../fm-deps/dune-project
 	$(Q)cp ../fm-deps/dune-project $@
 
 files/_br-fm-deps.opam: ../fm-deps/dune-project
-	$(Q)dune b --no-print-directory --display=quiet ../fm-deps/br-fm-deps.opam
+#	$(Q)dune b --no-print-directory --display=quiet ../fm-deps/br-fm-deps.opam
 	$(Q)cp ../fm-deps/br-fm-deps.opam $@
 
 DOCKER_BUILD_TARGETS =
