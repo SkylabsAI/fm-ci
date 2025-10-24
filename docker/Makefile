@@ -83,7 +83,7 @@ fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
 
 .PHONY: push-fm-base
 push-fm-base: fm-base
-	$(call push-target,fm-base)
+	$(eval $(call push-target,fm-base))
 DOCKER_PUSH_TARGETS += push-fm-base
 
 define image-target
