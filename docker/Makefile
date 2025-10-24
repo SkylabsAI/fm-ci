@@ -69,6 +69,18 @@ fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
 		--build-arg BR_IMAGE_VERSION=$(BR_IMAGE_VERSION) \
 		-f $$< .
 
+define push-target
+	@echo "[DOCKER] Pushing $(1)"
+ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
+	@echo "(Let's hope you did not mess anything up...)"
+	$(Q)docker push $(DOCKER_REPO):$(1)
+else
+	@echo "The command that would run would be:"
+	@echo "  docker push $(DOCKER_REPO):$(1)"
+	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
+endif
+endef
+
 define image-target
 fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
 	@echo "[DOCKER] Building $$@"
@@ -89,15 +101,7 @@ run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
 push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-	@echo "[DOCKER] Pushing $$<"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$$(Q)docker push $$(DOCKER_REPO):$$<
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $$(DOCKER_REPO):$$<"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
+	$(call push-target,$$<)
 .PHONY: push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_PUSH_TARGETS += push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 endef
@@ -189,16 +193,7 @@ run-release: build-release
 	$(Q)docker run -i -t $(DOCKER_REPO):$(RELEASE_TAG)
 
 push-release: build-release
-	@echo "[DOCKER] Pushing fm-release"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(DOCKER_REPO):$(RELEASE_TAG)
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $(DOCKER_REPO):$(RELEASE_TAG)"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
-
+	$(call push-target,$(RELEASE_TAG))
 .PHONY: push-release
 
 pull-release:
