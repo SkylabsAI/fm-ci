@@ -174,12 +174,12 @@ monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 
 TAR = $(shell which gtar || which tar)
-$(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
-	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
+$(monorepo_parent)/$(docker_build_folder)/files/workspace.tar:
+	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/workspace.tar workspace/
 
 CP = $(shell which gcp || which cp)
 .PHONY: prepare-release
-prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
+prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/workspace.tar
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
@@ -188,8 +188,10 @@ build-release: prepare-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_REPO="$(DOCKER_REPO)" \
-		--build-arg BASE_TAG=fm-default \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-default \
+		--build-arg ROCQ_LOG_PREFIX=bluerock \
+		--build-arg \
+		OPAM_PACKAGES='opam pin | grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)"' \
 		-t $(DOCKER_REPO):$(RELEASE_TAG) \
 		.
 
