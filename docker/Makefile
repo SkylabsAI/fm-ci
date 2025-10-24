@@ -190,6 +190,8 @@ build-release: prepare-release
 		-f Dockerfile-opam-release \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-default \
 		--build-arg ROCQ_LOG_PREFIX=bluerock \
+		--build-arg \
+		OPAM_PACKAGES='$(opam pin | grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)" | awk '{print $1}')' \
 		-t $(DOCKER_REPO):$(RELEASE_TAG) \
 		.
 
