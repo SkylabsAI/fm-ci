@@ -147,15 +147,7 @@ run-default: tag-default
 .PHONY: run-default
 
 push-default: tag-default
-	@echo "[DOCKER] Pushing tag fm-default"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(DOCKER_REPO):fm-default
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $(DOCKER_REPO):fm-default"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
+	$(call push-target,fm-default)
 
 .PHONY: push-default
 
