@@ -189,6 +189,7 @@ build-release: prepare-release
 	docker buildx build \
 		-f Dockerfile-opam-release \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-default \
+		--build-arg ROCQ_LOG_PREFIX=bluerock \
 		-t $(DOCKER_REPO):$(RELEASE_TAG) \
 		.
 
