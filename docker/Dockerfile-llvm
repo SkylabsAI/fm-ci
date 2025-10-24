@@ -8,7 +8,7 @@ RUN test -n "${LLVM_MAJ_VER}"
 
 ENV LLVM_VER=${LLVM_MAJ_VER}
 
-RUN echo "deb [trusted=yes] http://apt.llvm.org/${DEBIAN_CODENAME}/ llvm-toolchain-${DEBIAN_CODENAME}}-${LLVM_VER} main" \
+RUN echo "deb [trusted=yes] http://apt.llvm.org/${DEBIAN_CODENAME}/ llvm-toolchain-${DEBIAN_CODENAME}-${LLVM_VER} main" \
   | sudo tee -a /etc/apt/sources.list.d/llvm.list
 
 RUN sudo apt-get update -qy \
