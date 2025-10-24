@@ -1,18 +1,19 @@
 # FROM $BASE_IMAGE
-ARG BASE_REPO=registry.gitlab.com/skylabs_ai/fm/skylabs-fm
-ARG BASE_TAG=fm-default
-FROM $BASE_REPO:$BASE_TAG
+ARG BASE_IMAGE=registry.gitlab.com/skylabs_ai/fm/skylabs-fm:fm-default
+FROM $BASE_IMAGE
 
 COPY --chown=coq files/LICENSE /home/coq/LICENSE
 
 COPY files/opam-clean /tmp/files/opam-clean
 
+ARG ROCQ_LOG_PREFIX=bluerock
+ARG OPAM_PACKAGES
 RUN \
   --mount=type=bind,target=/tmp/skylabs-fm.tar,source=files/skylabs-fm.tar \
   cd /tmp \
   && tar xf skylabs-fm.tar \
   && cd /tmp/skylabs-fm \
-  && ./fmdeps/fm-ci/docker/opam_build.sh \
+  && ./fmdeps/fm-ci/docker/opam_build.sh "${ROCQ_LOG_PREFIX}" "${OPAM_PACKAGES}" \
   && sudo rm -rf /tmp/skylabs-fm
 
 # Can't be in the previous run command: it fails on skylabs-fm.tar
