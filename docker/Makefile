@@ -188,8 +188,7 @@ build-release: prepare-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_REPO="$(DOCKER_REPO)" \
-		--build-arg BASE_TAG=fm-default \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-default \
 		-t $(DOCKER_REPO):$(RELEASE_TAG) \
 		.
 
