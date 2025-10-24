@@ -1,17 +1,11 @@
 # Pick default bash, even if it's installed with Homebrew.
 SHELL := $(shell which bash)
 
-DOCKER_REGISTRY ?= registry.gitlab.com
-DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabs_ai/fm/fm-ci
+DOCKER_REGISTRY ?= ghcr.io
+DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/workspace
 
-# DOCKER_REGISTRY ?= ghcr.io
-# DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabsai/skylabs-fm
-
-REGISTRY ?= $(DOCKER_REGISTRY)
-BR_REGISTRY ?= $(DOCKER_SKYLABS_FM_REGISTRY)
-
-BR_FMDEPS_VERSION ?= 2025-10-10
-FM_RELEASE_FULL_VERSION = 2025-10-10
+BR_FMDEPS_VERSION ?= 2025-10-24
+FM_RELEASE_FULL_VERSION = 2025-10-24
 # FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)
 # We keep $(BR_IMAGE_VERSION) purely internal.
 # FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)-$(BR_IMAGE_VERSION)
@@ -58,42 +52,69 @@ files/_dune-project: ../fm-deps/dune-project
 	$(Q)cp ../fm-deps/dune-project $@
 
 files/_br-fm-deps.opam: ../fm-deps/dune-project
-	$(Q)dune b --no-print-directory --display=quiet ../fm-deps/br-fm-deps.opam
+#	$(Q)dune b --no-print-directory --display=quiet ../fm-deps/br-fm-deps.opam
 	$(Q)cp ../fm-deps/br-fm-deps.opam $@
 
 DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS =
 DOCKER_PUSH_TARGETS =
 
+define push-msg
+	@echo "[DOCKER] Pushing $(1)"
+endef
+
+ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
+define push-target
+	$(call ${push-msg}, $1)
+	@echo "(Let's hope you did not mess anything up...)"
+	$(Q)docker push $(DOCKER_REPO):$(1)
+endef
+else
+define push-target
+	$(call ${push-msg}, $1)
+	@echo "The command that would run would be:"
+	@echo "  docker push $(DOCKER_REPO):$(1)"
+	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
+endef
+endif
+
+.PHONY: fm-base
+fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+	@echo "[DOCKER] Building $$@"
+	$(Q)docker buildx build --pull \
+		--platform linux/amd64 \
+		-t $(DOCKER_REPO):$@ \
+		--build-arg \
+		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
+		-f $< .
+
+.PHONY: push-fm-base
+push-fm-base: fm-base
+	$(call push-target,fm-base)
+DOCKER_PUSH_TARGETS += push-fm-base
+
 define image-target
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
 	@echo "[DOCKER] Building $$@"
 	$$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
-		-t $$(BR_REGISTRY):$$@ \
-		--build-arg BR_FMDEPS_VERSION=$$(BR_FMDEPS_VERSION) \
-		--build-arg BR_IMAGE_VERSION=$$(BR_IMAGE_VERSION) \
-		--build-arg BR_LLVM_MAJ_VER=$1 \
+		-t $$(DOCKER_REPO):$$@ \
+		--build-arg LLVM_MAJ_VER=$1 \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-base \
+		--build-arg \
+		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}" \
 		-f $$< .
 .PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
 run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 	@echo "[DOCKER] Running $$<"
-	$$(Q)docker run -i -t $$(BR_REGISTRY):$$<
+	$$(Q)docker run -i -t $$(DOCKER_REPO):$$<
 .PHONY: run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
 push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-	@echo "[DOCKER] Pushing $$<"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$$(Q)docker push $$(BR_REGISTRY):$$<
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $$(BR_REGISTRY):$$<"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
+	$(call push-target,$$<)
 .PHONY: push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_PUSH_TARGETS += push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 endef
@@ -117,55 +138,48 @@ DEFAULT_TAG := fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
 
 tag-default: $(DEFAULT_TAG)
 	@echo "[DOCKER] Tagging $< as fm-default"
-	@docker image tag $(BR_REGISTRY):$< $(BR_REGISTRY):fm-default
+	@docker image tag $(DOCKER_REPO):$< $(DOCKER_REPO):fm-default
 .PHONY: tag-default
 
 run-default: tag-default
 	@echo "[DOCKER] Running fm-default"
-	$(Q)docker run -i -t $(BR_REGISTRY):fm-default
+	$(Q)docker run -i -t $(DOCKER_REPO):fm-default
 .PHONY: run-default
 
 push-default: tag-default
-	@echo "[DOCKER] Pushing tag fm-default"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(BR_REGISTRY):fm-default
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $(BR_REGISTRY):fm-default"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
+	$(call push-target,fm-default)
 
 .PHONY: push-default
 
-gitlab-login:
-	@echo -n "Enter your GitLab login: "
+github-login:
+	@echo -n "Enter your GitHub login: "
 	@read -r LOGIN; echo $$LOGIN > $@
 
-gitlab-token:
-	@echo -e $(call color,$(CYAN),You need a GitLab API token.)
-	@echo "See https://gitlab.com/-/user_settings/personal_access_tokens."
-	@echo -n "Enter your GitLab API token: "
+github-token:
+	@echo -e $(call color,$(CYAN),You need a GitHub personal access token (classic).)
+	@echo "See https://github.com/settings/tokens."
+	@echo "Select write:packages permission/scope when creating the token"
+	@echo -n "Enter your personal access token: "
 	@read -r TOKEN; echo $$TOKEN > $@
 
-login: gitlab-login gitlab-token
-	$(Q)docker login -u $$(cat $<) --password-stdin $(REGISTRY) < gitlab-token
+login: github-login github-token
+	${Q}docker login -u $$(cat $<) --password-stdin $(DOCKER_REGISTRY) < github-token
 .PHONY: login
 
 logout:
-	$(Q)docker logout $(REGISTRY)
+	$(Q)docker logout $(DOCKER_REGISTRY)
 .PHONY: logout
 
 monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 
 TAR = $(shell which gtar || which tar)
-$(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
-	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
+$(monorepo_parent)/$(docker_build_folder)/files/workspace.tar:
+	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/workspace.tar workspace/
 
 CP = $(shell which gcp || which cp)
 .PHONY: prepare-release
-prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
+prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/workspace.tar
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
@@ -174,31 +188,24 @@ build-release: prepare-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_REPO="$(DOCKER_SKYLABS_FM_REGISTRY)" \
-		--build-arg BASE_TAG=fm-default \
-		-t $(BR_REGISTRY):$(RELEASE_TAG) \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-default \
+		--build-arg ROCQ_LOG_PREFIX=bluerock \
+		--build-arg \
+		OPAM_PACKAGES='opam pin | grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)"' \
+		-t $(DOCKER_REPO):$(RELEASE_TAG) \
 		.
 
 .PHONY: run-release
 run-release: build-release
 	@echo "[DOCKER] Running fm-release"
-	$(Q)docker run -i -t $(BR_REGISTRY):$(RELEASE_TAG)
+	$(Q)docker run -i -t $(DOCKER_REPO):$(RELEASE_TAG)
 
 push-release: build-release
-	@echo "[DOCKER] Pushing fm-release"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(BR_REGISTRY):$(RELEASE_TAG)
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $(BR_REGISTRY):$(RELEASE_TAG)"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
-
+	$(call push-target,$(RELEASE_TAG))
 .PHONY: push-release
 
 pull-release:
-	$(Q)docker pull $(BR_REGISTRY):$(RELEASE_TAG)
+	$(Q)docker pull $(DOCKER_REPO):$(RELEASE_TAG)
 
 .PHONY: pull-release
 
@@ -210,7 +217,7 @@ name-release:
 	@echo $(FM_RELEASE_TARBALL_NAME)
 
 $(FM_RELEASE_TARBALL_NAME).tar.gz:
-	docker save $(BR_REGISTRY):$(RELEASE_TAG) | $(PV) | gzip > "$@"
+	docker save $(DOCKER_REPO):$(RELEASE_TAG) | $(PV) | gzip > "$@"
 
 pack-release: $(FM_RELEASE_TARBALL_NAME).tar.gz
 .PHONY: pack-release
