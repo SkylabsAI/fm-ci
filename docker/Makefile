@@ -135,18 +135,19 @@ push-default: tag-default
 
 .PHONY: push-default
 
-gitlab-login:
-	@echo -n "Enter your GitLab login: "
+github-login:
+	@echo -n "Enter your GitHub login: "
 	@read -r LOGIN; echo $$LOGIN > $@
 
-gitlab-token:
-	@echo -e $(call color,$(CYAN),You need a GitLab API token.)
-	@echo "See https://gitlab.com/-/user_settings/personal_access_tokens."
-	@echo -n "Enter your GitLab API token: "
+github-token:
+	@echo -e $(call color,$(CYAN),You need a GitHub personal access token (classic).)
+	@echo "See https://github.com/settings/tokens."
+	@echo "Select write:packages permission/scope when creating the token"
+	@echo -n "Enter your personal access token: "
 	@read -r TOKEN; echo $$TOKEN > $@
 
-login: gitlab-login gitlab-token
-	$(Q)docker login -u $$(cat $<) --password-stdin $(DOCKER_REGISTRY) < gitlab-token
+login: github-login github-token
+	${Q}docker login -u $$(cat $<) --password-stdin $(DOCKER_REGISTRY) < github-token
 .PHONY: login
 
 logout:

@@ -1,4 +1,4 @@
 files/_br-fm-deps.opam
 files/_dune-project
-gitlab-login
-gitlab-token
+github-login
+github-token
