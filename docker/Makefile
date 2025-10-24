@@ -59,8 +59,18 @@ DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS =
 DOCKER_PUSH_TARGETS =
 
+.PHONY: fm-base
+fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+	@echo "[DOCKER] Building $$@"
+	$(Q)docker buildx build --pull \
+		--platform linux/amd64 \
+		-t $(DOCKER_REPO):$@ \
+		--build-arg BR_FMDEPS_VERSION=$(BR_FMDEPS_VERSION) \
+		--build-arg BR_IMAGE_VERSION=$(BR_IMAGE_VERSION) \
+		-f $$< .
+
 define image-target
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
 	@echo "[DOCKER] Building $$@"
 	$$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
