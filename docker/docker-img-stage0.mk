@@ -1,0 +1,17 @@
+.PHONY: fm-$(BR_FMDEPS_VERSION)-base
+fm-$(BR_FMDEPS_VERSION)-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+	@echo "[DOCKER] Building $$@"
+	$(Q)docker buildx build --pull \
+		--platform linux/amd64 \
+		-t $(DOCKER_REPO):$@ \
+		--build-arg \
+		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
+		-f $< .
+DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
+
+files/_dune-project: ../fm-deps/dune-project
+	$(Q)cp ../fm-deps/dune-project $@
+
+files/_br-fm-deps.opam: ../fm-deps/dune-project
+	$(Q)dune b --no-print-directory --display=quiet ../fm-deps/br-fm-deps.opam
+	$(Q)cp ../fm-deps/br-fm-deps.opam $@
