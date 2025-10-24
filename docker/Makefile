@@ -59,17 +59,24 @@ DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS =
 DOCKER_PUSH_TARGETS =
 
-define push-target
+define push-msg
 	@echo "[DOCKER] Pushing $(1)"
+endef
+
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
+define push-target
+	$(call ${push-msg}, $1)
 	@echo "(Let's hope you did not mess anything up...)"
 	$(Q)docker push $(DOCKER_REPO):$(1)
+endef
 else
+define push-target
+	$(call ${push-msg}, $1)
 	@echo "The command that would run would be:"
 	@echo "  docker push $(DOCKER_REPO):$(1)"
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
 endef
+endif
 
 .PHONY: fm-base
 fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
