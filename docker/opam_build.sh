@@ -1,12 +1,13 @@
 #!/bin/bash -evx
 
 ROCQ_LOG_PREFIX="$1"
-OPAM_PACKAGES="$2"
 
 opam option depext=false
 opam update -y
 
 opam pin add -y -k rsync --recursive -n --with-version dev .
+
+OPAM_PACKAGES=$(eval $2 | awk '{print $1}')
 
 opam install -y ${OPAM_PACKAGES}
 /tmp/files/opam-clean
