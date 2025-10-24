@@ -59,16 +59,6 @@ DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS =
 DOCKER_PUSH_TARGETS =
 
-.PHONY: fm-base
-fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
-	@echo "[DOCKER] Building $$@"
-	$(Q)docker buildx build --pull \
-		--platform linux/amd64 \
-		-t $(DOCKER_REPO):$@ \
-		--build-arg BR_FMDEPS_VERSION=$(BR_FMDEPS_VERSION) \
-		--build-arg BR_IMAGE_VERSION=$(BR_IMAGE_VERSION) \
-		-f $$< .
-
 define push-target
 	@echo "[DOCKER] Pushing $(1)"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
@@ -80,6 +70,21 @@ else
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
 endif
 endef
+
+.PHONY: fm-base
+fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+	@echo "[DOCKER] Building $$@"
+	$(Q)docker buildx build --pull \
+		--platform linux/amd64 \
+		-t $(DOCKER_REPO):$@ \
+		--build-arg \
+		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
+		-f $$< .
+
+.PHONY: push-fm-base
+push-fm-base: build-fm-base
+	$(call push-target,fm-base)
+DOCKER_PUSH_TARGETS += push-fm-base
 
 define image-target
 fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
