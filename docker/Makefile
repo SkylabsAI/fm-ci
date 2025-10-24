@@ -2,7 +2,7 @@
 SHELL := $(shell which bash)
 
 DOCKER_REGISTRY ?= ghcr.io
-DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/skylabs-fm
+DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/workspace
 
 BR_FMDEPS_VERSION ?= 2025-10-24
 FM_RELEASE_FULL_VERSION = 2025-10-24
