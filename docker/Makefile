@@ -79,7 +79,7 @@ fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
 		-t $(DOCKER_REPO):$@ \
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
-		-f $$< .
+		-f $< .
 
 .PHONY: push-fm-base
 push-fm-base: build-fm-base
