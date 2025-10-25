@@ -173,9 +173,9 @@ logout:
 monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 
-TAR = $(shell which gtar || which tar)
 $(monorepo_parent)/$(docker_build_folder)/files/workspace.tar:
-	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/workspace.tar workspace/
+	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; \
+	  time ./workspace/fmdeps/fm-ci/docker/stable-tar.sh workspace $(docker_build_folder)/files/
 
 CP = $(shell which gcp || which cp)
 .PHONY: prepare-release
