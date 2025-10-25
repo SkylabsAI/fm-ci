@@ -59,27 +59,26 @@ DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS =
 DOCKER_PUSH_TARGETS =
 
-define push-msg
-	@echo "[DOCKER] Pushing $(1)"
-endef
+.PHONY: FORCE
+FORCE:
 
+run-fm-%: fm-% FORCE
+	@echo "[DOCKER] Running $<"
+	$(Q)docker run -i -t $(DOCKER_REPO):$<
+
+push-fm-%: fm-% FORCE
+	@echo "[DOCKER] Pushing $<"
 ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-define push-target
-	$(call ${push-msg}, $1)
 	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(DOCKER_REPO):$(1)
-endef
+	$(Q)docker push $(DOCKER_REPO):$<
 else
-define push-target
-	$(call ${push-msg}, $1)
 	@echo "The command that would run would be:"
-	@echo "  docker push $(DOCKER_REPO):$(1)"
+	@echo "  docker push $(DOCKER_REPO):$<"
 	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endef
 endif
 
-.PHONY: fm-base
-fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+.PHONY: fm-$(BR_FMDEPS_VERSION)-base
+fm-$(BR_FMDEPS_VERSION)-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
 	@echo "[DOCKER] Building $$@"
 	$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
@@ -87,37 +86,23 @@ fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
 		-f $< .
-
-.PHONY: push-fm-base
-push-fm-base: fm-base
-	$(call push-target,fm-base)
-DOCKER_PUSH_TARGETS += push-fm-base
-
-run-fm-%: fm-%i
-	@echo "[DOCKER] Running $<"
-	$$(Q)docker run -i -t $(DOCKER_REPO):$<
-.PHONY: run-fm-%
+DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
+DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-base
 
 define image-target
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
+.PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
+fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-$(BR_FMDEPS_VERSION)-base
 	@echo "[DOCKER] Building $$@"
-	$$(Q)docker buildx build --pull \
+	$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
-		-t $$(DOCKER_REPO):$$@ \
+		-t $(DOCKER_REPO):$$@ \
 		--build-arg LLVM_MAJ_VER=$1 \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-base \
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}" \
 		-f $$< .
-.PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-
-.PHONY: run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-
-push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-	$(call push-target,$$<)
-.PHONY: push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_PUSH_TARGETS += push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 endef
 
@@ -138,20 +123,15 @@ list-targets:
 
 DEFAULT_TAG := fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
 
-tag-default: $(DEFAULT_TAG)
-	@echo "[DOCKER] Tagging $< as fm-default"
-	@docker image tag $(DOCKER_REPO):$< $(DOCKER_REPO):fm-default
-.PHONY: tag-default
+define tag-target
+	@echo "[DOCKER] Tagging $1 as $2"
+	${Q}docker image tag $(DOCKER_REPO):$1 $(DOCKER_REPO):$2
+endef
 
-run-default: tag-default
-	@echo "[DOCKER] Running fm-default"
-	$(Q)docker run -i -t $(DOCKER_REPO):fm-default
-.PHONY: run-default
-
-push-default: tag-default
-	$(call push-target,fm-default)
-
-.PHONY: push-default
+.PHONY: fm-default
+fm-default: $(DEFAULT_TAG)
+	$(call tag-target,$<,fm-default)
+# DOCKER_BUILD_TARGETS += fm-default
 
 github-login:
 	@echo -n "Enter your GitHub login: "
@@ -175,36 +155,34 @@ logout:
 monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 
+# XXX missing dependencies!
+# Move this step into a control script instead!
 $(monorepo_parent)/$(docker_build_folder)/files/workspace.tar:
 	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; \
 	  time ./workspace/fmdeps/fm-ci/docker/stable-tar.sh workspace $(docker_build_folder)/files/
 
 CP = $(shell which gcp || which cp)
-.PHONY: prepare-release
-prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/workspace.tar
+.PHONY: prepare-fm-release
+prepare-fm-release: $(monorepo_parent)/$(docker_build_folder)/files/workspace.tar
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
-.PHONY: build-release
-build-release: prepare-release
+.PHONY: fm-$(BR_FMDEPS_VERSION)-release
+fm-$(BR_FMDEPS_VERSION)-release: prepare-fm-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-default \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):$(DEFAULT_TAG) \
 		--build-arg ROCQ_LOG_PREFIX=bluerock \
 		--build-arg \
 		OPAM_PACKAGES='opam pin | grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)"' \
-		-t $(DOCKER_REPO):$(RELEASE_TAG) \
+		-t $(DOCKER_REPO):$@ \
 		.
+DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-release
+DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-release
 
-.PHONY: run-release
-run-release: build-release
-	@echo "[DOCKER] Running fm-release"
-	$(Q)docker run -i -t $(DOCKER_REPO):$(RELEASE_TAG)
-
-push-release: build-release
-	$(call push-target,$(RELEASE_TAG))
-.PHONY: push-release
+fm-release: fm-$(BR_FMDEPS_VERSION)-release
+	$(call tag-target,$<,fm-release)
 
 pull-release:
 	$(Q)docker pull $(DOCKER_REPO):$(RELEASE_TAG)
