@@ -93,6 +93,11 @@ push-fm-base: fm-base
 	$(call push-target,fm-base)
 DOCKER_PUSH_TARGETS += push-fm-base
 
+run-fm-%: fm-%i
+	@echo "[DOCKER] Running $<"
+	$$(Q)docker run -i -t $(DOCKER_REPO):$<
+.PHONY: run-fm-%
+
 define image-target
 fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
 	@echo "[DOCKER] Building $$@"
@@ -107,9 +112,6 @@ fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
 .PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
-run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-	@echo "[DOCKER] Running $$<"
-	$$(Q)docker run -i -t $$(DOCKER_REPO):$$<
 .PHONY: run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 
