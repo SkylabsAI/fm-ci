@@ -56,8 +56,8 @@ files/_br-fm-deps.opam: ../fm-deps/dune-project
 	$(Q)cp ../fm-deps/br-fm-deps.opam $@
 
 DOCKER_BUILD_TARGETS =
-DOCKER_RUN_TARGETS =
-DOCKER_PUSH_TARGETS =
+DOCKER_RUN_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),run-$(i))
+DOCKER_PUSH_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),push-$(i))
 
 .PHONY: FORCE
 FORCE:
@@ -87,7 +87,6 @@ fm-$(BR_FMDEPS_VERSION)-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dun
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
 		-f $< .
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
-DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-base
 
 define image-target
 .PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
@@ -102,8 +101,6 @@ fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-$(BR_FMDEPS_VERSION)-base
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}" \
 		-f $$< .
 DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-DOCKER_PUSH_TARGETS += push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 endef
 
 $(foreach llvm,$(LLVM_VERSIONS),\
@@ -133,8 +130,6 @@ fm-default: $(DEFAULT_TAG)
 	$(call tag-target,$<,fm-default)
 
 DOCKER_BUILD_TARGETS += fm-default
-DOCKER_RUN_TARGETS += run-fm-default
-DOCKER_PUSH_TARGETS += push-fm-default
 
 github-login:
 	@echo -n "Enter your GitHub login: "
@@ -182,15 +177,11 @@ fm-$(BR_FMDEPS_VERSION)-release: prepare-fm-release
 		-t $(DOCKER_REPO):$@ \
 		.
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-release
-DOCKER_RUN_TARGETS += run-fm-$(BR_FMDEPS_VERSION)-release
-DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-release
 
 .PHONY: fm-release
 fm-release: fm-$(BR_FMDEPS_VERSION)-release
 	$(call tag-target,$<,fm-release)
 DOCKER_BUILD_TARGETS += fm-release
-DOCKER_RUN_TARGETS += run-fm-release
-DOCKER_PUSH_TARGETS += push-fm-release
 
 .PHONY: pull-release
 pull-release:
