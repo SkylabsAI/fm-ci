@@ -44,9 +44,9 @@ define color
 	"\033[0;$1m$2\033[0m"
 endef
 
+.PHONY: all
 all:
 	@echo -e $(call color,$(CYAN),See README.md for documentation.)
-.PHONY: all
 
 files/_dune-project: ../fm-deps/dune-project
 	$(Q)cp ../fm-deps/dune-project $@
@@ -109,17 +109,17 @@ endef
 $(foreach llvm,$(LLVM_VERSIONS),\
 	$(eval $(call image-target,$(llvm))))
 
-build: $(DOCKER_BUILD_TARGETS)
 .PHONY: build
+build: $(DOCKER_BUILD_TARGETS)
 
-push: build $(DOCKER_PUSH_TARGETS)
 .PHONY: push
+push: build $(DOCKER_PUSH_TARGETS)
 
+.PHONY: list-targets
 list-targets:
 	@echo "$(DOCKER_BUILD_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_RUN_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_PUSH_TARGETS)" | tr ' ' '\n' | sort -V
-.PHONY: list-targets
 
 DEFAULT_TAG := fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
 
@@ -147,13 +147,13 @@ github-token:
 	@echo -n "Enter your personal access token: "
 	@read -r TOKEN; echo $$TOKEN > $@
 
+.PHONY: login
 login: github-login github-token
 	${Q}docker login -u $$(cat $<) --password-stdin $(DOCKER_REGISTRY) < github-token
-.PHONY: login
 
+.PHONY: logout
 logout:
 	$(Q)docker logout $(DOCKER_REGISTRY)
-.PHONY: logout
 
 monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
@@ -192,10 +192,9 @@ DOCKER_BUILD_TARGETS += fm-release
 DOCKER_RUN_TARGETS += run-fm-release
 DOCKER_PUSH_TARGETS += push-fm-release
 
+.PHONY: pull-release
 pull-release:
 	$(Q)docker pull $(DOCKER_REPO):$(RELEASE_TAG)
-
-.PHONY: pull-release
 
 PV = $(if $(shell which pv),pv,cat)
 
@@ -207,21 +206,21 @@ name-release:
 $(FM_RELEASE_TARBALL_NAME).tar.gz:
 	docker save $(DOCKER_REPO):$(RELEASE_TAG) | $(PV) | gzip > "$@"
 
-pack-release: $(FM_RELEASE_TARBALL_NAME).tar.gz
 .PHONY: pack-release
+pack-release: $(FM_RELEASE_TARBALL_NAME).tar.gz
 
+.PHONY: unpack-release
 unpack-release:
 	$(PV) $(FM_RELEASE_TARBALL_NAME).tar.gz | docker load
-.PHONY: unpack-release
 
+.PHONY: clean
 clean:
 	@rm -f files/_br-fm-deps.opam files/_dune-project files/fm-artifact.zip
-.PHONY: clean
 
+.PHONY: clean-token
 clean-all: clean
 	@rm -f gitlab-token gitlab-login
-.PHONY: clean-token
 
+.PHONY: system-prune
 system-prune:
 	@docker system prune
-.PHONY: system-prune
