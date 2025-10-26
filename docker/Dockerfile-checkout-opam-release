@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=registry.gitlab.com/skylabs_ai/fm/skylabs-fm:fm-default
+ARG BASE_IMAGE=ghcr.io/skylabsai/workspace:fm-default
 FROM $BASE_IMAGE
 
 ARG ROOT_COMMIT

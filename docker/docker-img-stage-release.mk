@@ -15,11 +15,12 @@ prepare-fm-release: $(monorepo_parent)/$(docker_build_folder)/files/workspace.ta
 	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
 
 .PHONY: fm-$(BR_FMDEPS_VERSION)-release
-fm-$(BR_FMDEPS_VERSION)-release: prepare-fm-release
+
+fm-$(BR_FMDEPS_VERSION)-release: fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION) prepare-fm-release
 	cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
-		--build-arg BASE_IMAGE=$(DOCKER_REPO):$(DEFAULT_TAG) \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
 		--build-arg ROCQ_LOG_PREFIX=bluerock \
 		--build-arg \
 		OPAM_PACKAGES='opam pin | grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)"' \

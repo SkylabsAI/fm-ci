@@ -1,5 +1,5 @@
 # FROM $BASE_IMAGE
-ARG BASE_IMAGE=registry.gitlab.com/skylabs_ai/fm/workspace:fm-default
+ARG BASE_IMAGE=ghcr.io/skylabsai/workspace:fm-default
 FROM $BASE_IMAGE
 
 COPY --chown=coq files/LICENSE /home/coq/LICENSE
