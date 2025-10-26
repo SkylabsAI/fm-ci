@@ -78,15 +78,31 @@ define push-target
 endef
 endif
 
+.PHONY: fm-base
+fm-base: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+	@echo "[DOCKER] Building $$@"
+	$(Q)docker buildx build --pull \
+		--platform linux/amd64 \
+		-t $(DOCKER_REPO):$@ \
+		--build-arg \
+		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
+		-f $< .
+
+.PHONY: push-fm-base
+push-fm-base: fm-base
+	$(call push-target,fm-base)
+DOCKER_PUSH_TARGETS += push-fm-base
+
 define image-target
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
+fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-base
 	@echo "[DOCKER] Building $$@"
 	$$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
 		-t $$(DOCKER_REPO):$$@ \
-		--build-arg BR_FMDEPS_VERSION=$$(BR_FMDEPS_VERSION) \
-		--build-arg BR_IMAGE_VERSION=$$(BR_IMAGE_VERSION) \
-		--build-arg BR_LLVM_MAJ_VER=$1 \
+		--build-arg LLVM_MAJ_VER=$1 \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):fm-base \
+		--build-arg \
+		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}" \
 		-f $$< .
 .PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
 DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
