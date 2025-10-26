@@ -12,3 +12,8 @@ DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
 GEN_FILES += files/_br-fm-deps.opam
 files/_br-fm-deps.opam: ../fm-deps/br-fm-deps.opam
 	$(Q)cp $< $@
+
+.PHONY: fm-base
+fm-base: fm-$(BR_FMDEPS_VERSION)-base
+	$(call tag-target,$<,$@)
+DOCKER_BUILD_TARGETS += fm-base
