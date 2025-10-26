@@ -179,10 +179,14 @@ fm-$(BR_FMDEPS_VERSION)-release: prepare-fm-release
 		-t $(DOCKER_REPO):$@ \
 		.
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-release
+DOCKER_RUN_TARGETS += run-fm-$(BR_FMDEPS_VERSION)-release
 DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-release
 
 fm-release: fm-$(BR_FMDEPS_VERSION)-release
 	$(call tag-target,$<,fm-release)
+DOCKER_BUILD_TARGETS += fm-release
+DOCKER_RUN_TARGETS += run-fm-release
+DOCKER_PUSH_TARGETS += push-fm-release
 
 pull-release:
 	$(Q)docker pull $(DOCKER_REPO):$(RELEASE_TAG)
