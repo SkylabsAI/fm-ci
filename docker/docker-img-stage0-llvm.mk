@@ -1,6 +1,6 @@
 define image-target
-.PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-$(BR_FMDEPS_VERSION)-base
+.PHONY: fm-$(BR_FMDEPS_VERSION)-llvm-$1
+fm-$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-$(BR_FMDEPS_VERSION)-base
 	@echo "[DOCKER] Building $$@"
 	$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
@@ -10,7 +10,7 @@ fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-llvm fm-$(BR_FMDEPS_VERSION)-base
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}" \
 		-f $$< .
-DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
+DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-llvm-$1
 endef
 
 $(foreach llvm,$(LLVM_VERSIONS),\
