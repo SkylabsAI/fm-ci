@@ -84,16 +84,12 @@ To set up new CI images, e.g., with new FM dependencies, you need to:
  4. Run `make build` to confirm that images build fine.
  5. Try running some of the images, to check that they work as expected.
  6. Run `make push`, confirm the commands look fine, and follow instructions.
- 7. Run `make fm-default` to prepare the `fm-default` image (**DO NOT PUSH**).
- 8. Run `make run-fm-default` to check that the `fm-default` image is as expected.
  9. Modify the `versions` section of `fm-ci/config.toml` to:
     - Update the `image` field to contain the new image version,
     - Update the `main_llvm` field according to the `Makefile`.
 10. Make an `fm-ci` MR, and use the `CI::same-branch` tag if needed.
-    - Set the `CI::same-branch` tag in all non-NOVA MRs.
-    - If a NOVA MR is used, set the `CI-skip-proof` tag.
+    - Set the `CI::same-branch` tag in all MRs.
 11. When MRs are ready and approved, take an atomic lock, and then:
-    - Run `make push-fm-default` and follow instructions like for `make push`.
     - Merge all your non-`fm-ci` MRs.
     - Merge your `fm-ci` MR and confirm that CI passes.
     - Release the atomic lock.

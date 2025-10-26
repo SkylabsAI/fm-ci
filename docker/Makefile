@@ -131,7 +131,10 @@ endef
 .PHONY: fm-default
 fm-default: $(DEFAULT_TAG)
 	$(call tag-target,$<,fm-default)
-# DOCKER_BUILD_TARGETS += fm-default
+
+DOCKER_BUILD_TARGETS += fm-default
+DOCKER_RUN_TARGETS += run-fm-default
+DOCKER_PUSH_TARGETS += push-fm-default
 
 github-login:
 	@echo -n "Enter your GitHub login: "
@@ -182,6 +185,7 @@ DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-release
 DOCKER_RUN_TARGETS += run-fm-$(BR_FMDEPS_VERSION)-release
 DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-release
 
+.PHONY: fm-release
 fm-release: fm-$(BR_FMDEPS_VERSION)-release
 	$(call tag-target,$<,fm-release)
 DOCKER_BUILD_TARGETS += fm-release
