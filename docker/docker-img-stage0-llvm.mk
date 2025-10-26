@@ -2,7 +2,7 @@ define image-target
 .PHONY: fm-$(BR_FMDEPS_VERSION)-llvm-$1
 fm-$(BR_FMDEPS_VERSION)-llvm-$1: fm-$(BR_FMDEPS_VERSION)-base Dockerfile-llvm
 	@echo "[DOCKER] Building $$@"
-	$(Q)docker buildx build --pull \
+	$(Q)docker buildx build \
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$$@ \
 		--build-arg LLVM_MAJ_VER=$1 \
