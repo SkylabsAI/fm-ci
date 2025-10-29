@@ -29,7 +29,7 @@ let yaml_file : string = Sys.argv.(3)
 let repos_destdir = "repos"
 
 (** Project name for fm-ci (the current repository). *)
-let fm_ci_project_name = "formal-methods/fm-ci"
+let fm_ci_project_name = "fm-ci"
 
 (** Information about the originating repository (trigger). *)
 let trigger = Info.get_trigger ()
@@ -107,7 +107,7 @@ let main_branch : string -> string = fun project ->
 let gitlab_repo_base_url token =
   (* Only for use during testing! *)
   if token = "FAKE_TOKEN" then
-    "git@gitlab.com:skylabs_ai"
+    "git@github.com:SkylabsAI"
   else
     Printf.sprintf
       "https://gitlab-ci-token:%s@gitlab.com/skylabs_ai"
@@ -525,7 +525,7 @@ let skylabs_fm_hash : string =
 
 let skylabs_fm_cloning : string -> string -> unit = fun indent destdir ->
   let cmd indent fmt = icmd (indent ^ "- ") fmt in
-  cmd indent "git clone --depth 1 %s %s" (repo_url "${CI_JOB_TOKEN}" "FM/skylabs-fm") destdir;
+  cmd indent "git clone --depth 1 %s %s" (repo_url "${CI_JOB_TOKEN}" "skylabs-fm") destdir;
   cmd indent "git -C %s fetch --depth 1 --quiet origin %s" destdir skylabs_fm_hash;
   cmd indent "git -C %s -c advice.detachedHead=false checkout %s" destdir skylabs_fm_hash
 
