@@ -6,30 +6,28 @@ main_llvm = 19
 
 [repo.fm-ci]
 
-[repo.stdpp]
-branch = "br-master"
+[repo.rocq-stdpp]
+branch = "skylabs-master"
 deps = ["fm-ci"]
 vendored = true
 
 [repo.BRiCk]
-branch = "master"
-deps = ["fm-ci", "stdpp"]
+deps = ["fm-ci", "rocq-stdpp"]
 
 [repo.skylabs-fm]
 path = "."
 
 [repo.auto]
-branch = "master"
 deps = ["fm-ci", "BRiCk"]
 
 [repo.nova-interface]
-gitlab = "FM/bluerock/nova-interface"
+gitlab = "bluerock.nova-interface"
 branch = "skylabs-main"
 deps = ["fm-ci", "auto"]
 path = "./bluerock/nova-interface"
 
 [repo.NOVA]
-gitlab = "FM/bluerock/NOVA"
+gitlab = "bluerock.NOVA"
 branch = "skylabs-proof"
 deps = ["fm-ci", "nova-interface"]
 path = "./bluerock/NOVA"

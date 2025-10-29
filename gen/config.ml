@@ -113,7 +113,7 @@ let read_config : string -> config = fun file ->
           let gitlab =
             match !gitlab with
             | Some(gitlab) -> gitlab
-            | None         -> Format.sprintf "FM/%s" name
+            | None         -> Format.sprintf "%s" name
           in
           let skylabs_fm_path =
             match !skylabs_fm_path with
