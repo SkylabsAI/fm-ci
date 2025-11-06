@@ -14,7 +14,7 @@ GEN_FILES =
 
 DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),run-$(i))
-DOCKER_PUSH_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),push-$(i))
+DOCKER_PUSH_TARGETS =
 
 define tag-target
 	@echo "[DOCKER] Tagging $1 as $2"
@@ -39,6 +39,7 @@ list-targets:
 	@echo "$(DOCKER_BUILD_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_RUN_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_PUSH_TARGETS)" | tr ' ' '\n' | sort -V
+	@echo -e "\n*** Pass TAG_DEFAULTS=yes to overwrite default-tags when pushing. ***"
 
 .PHONY: clean-all
 clean-all: clean clean-token
