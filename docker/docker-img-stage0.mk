@@ -9,5 +9,6 @@ fm-$(BR_FMDEPS_VERSION)-base: Dockerfile-fm-ci files/_br-fm-deps.opam
 		-f $< .
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
 
+GEN_FILES += files/_br-fm-deps.opam
 files/_br-fm-deps.opam: ../fm-deps/br-fm-deps.opam
 	$(Q)cp $< $@

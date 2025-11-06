@@ -10,6 +10,8 @@ all:
 .PHONY: FORCE
 FORCE:
 
+GEN_FILES =
+
 DOCKER_BUILD_TARGETS =
 DOCKER_RUN_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),run-$(i))
 DOCKER_PUSH_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),push-$(i))
@@ -38,13 +40,12 @@ list-targets:
 	@echo "$(DOCKER_RUN_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_PUSH_TARGETS)" | tr ' ' '\n' | sort -V
 
+.PHONY: clean-all
+clean-all: clean clean-token
+
 .PHONY: clean
 clean:
-	@rm -f files/_br-fm-deps.opam files/_dune-project files/fm-artifact.zip
-
-.PHONY: clean-token
-clean-all: clean
-	@rm -f gitlab-token gitlab-login
+	$(Q)rm -f $(GEN_FILES)
 
 .PHONY: system-prune
 system-prune:

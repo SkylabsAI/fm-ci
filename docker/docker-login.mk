@@ -16,3 +16,7 @@ login: github-login github-token
 .PHONY: logout
 logout:
 	$(Q)docker logout $(DOCKER_REGISTRY)
+
+.PHONY: clean-token
+clean-token:
+	$(Q)rm -f gitlab-token gitlab-login

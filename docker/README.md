@@ -55,6 +55,11 @@ make list-targets
 to get a list of available `Makefile` targets. The list also includes targets
 for running (prefixed with `run-`) and pushing (prefixed with `push-`) images.
 
+## Cleaning
+
+`make clean` will remove artifacts, `make clean-token` will remove login
+credentials, `make clean-all` will remove both.
+
 ## Pushing Tags
 
 To push all tags (this implies building), run:
