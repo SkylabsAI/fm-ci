@@ -69,6 +69,8 @@ make push
 Note that by default the commands are not run. See the output to know how to
 actually push.
 
+To override default tags, call with `TAG_DEFAULTS=yes`.
+
 **Note:** when you are setting up a new image version, with a distinct value
 for `BR_FMDEPS_VERSION`, pushing is perfectly safe. In case of mistake in the
 images configuration, you can push again without worry (provided you bump the

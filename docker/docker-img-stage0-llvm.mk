@@ -10,7 +10,9 @@ fm-$(BR_FMDEPS_VERSION)-llvm-$1: fm-$(BR_FMDEPS_VERSION)-base Dockerfile-llvm
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}" \
 		-f Dockerfile-llvm .
+
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-llvm-$1
+DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-llvm-$1
 endef
 
 $(foreach llvm,$(LLVM_VERSIONS),\
@@ -19,4 +21,9 @@ $(foreach llvm,$(LLVM_VERSIONS),\
 .PHONY: fm-default
 fm-default: fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
 	$(call tag-target,$<,$@)
+
 DOCKER_BUILD_TARGETS += fm-default
+
+ifeq ($(TAG_DEFAULTS),yes)
+DOCKER_PUSH_TARGETS += push-fm-default
+endif

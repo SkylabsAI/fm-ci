@@ -26,10 +26,16 @@ fm-$(BR_FMDEPS_VERSION)-release: fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSIO
 		OPAM_PACKAGES='opam pin | grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)"' \
 		-t $(DOCKER_REPO):$@ \
 		.
+
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-release
+DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-release
 
 .PHONY: fm-release
 fm-release: fm-$(BR_FMDEPS_VERSION)-release
 	$(call tag-target,$<,fm-release)
+
 DOCKER_BUILD_TARGETS += fm-release
 
+ifeq ($(TAG_DEFAULTS),yes)
+DOCKER_PUSH_TARGETS += push-fm-release
+endif

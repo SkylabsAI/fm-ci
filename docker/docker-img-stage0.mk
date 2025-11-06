@@ -7,7 +7,9 @@ fm-$(BR_FMDEPS_VERSION)-base: Dockerfile-fm-ci files/_br-fm-deps.opam
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
 		-f $< .
+
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
+DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-base
 
 GEN_FILES += files/_br-fm-deps.opam
 files/_br-fm-deps.opam: ../fm-deps/br-fm-deps.opam
@@ -16,4 +18,9 @@ files/_br-fm-deps.opam: ../fm-deps/br-fm-deps.opam
 .PHONY: fm-base
 fm-base: fm-$(BR_FMDEPS_VERSION)-base
 	$(call tag-target,$<,$@)
+
 DOCKER_BUILD_TARGETS += fm-base
+
+ifeq ($(TAG_DEFAULTS),yes)
+DOCKER_PUSH_TARGETS += push-fm-base
+endif
