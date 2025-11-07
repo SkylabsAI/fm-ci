@@ -5,3 +5,13 @@ fm-$(BR_FMDEPS_VERSION)-stage3-release: fm-$(BR_FMDEPS_VERSION)-stage2-llvm-$(LL
 
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-stage3-release
 DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-stage3-release
+
+.PHONY: fm-release
+fm-release: fm-$(BR_FMDEPS_VERSION)-stage3-release
+	$(call tag-target,$<,$@)
+
+DOCKER_BUILD_TARGETS += fm-release
+
+ifeq ($(TAG_DEFAULTS),yes)
+DOCKER_PUSH_TARGETS += push-fm-release
+endif
