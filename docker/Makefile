@@ -43,6 +43,7 @@ include docker-img-stage0-llvm.mk
 include docker-img-tarball.mk
 include docker-img-stage1-vendored.mk
 include docker-img-stage2-auto.mk
+include docker-img-stage2-auto-llvm.mk
 include docker-img-stage-release.mk
 include docker-img-stage-release-misc.mk
 include docker-img-basics.mk
