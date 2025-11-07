@@ -21,9 +21,25 @@ define tag-target
 	${Q}docker image tag $(DOCKER_REPO):$1 $(DOCKER_REPO):$2
 endef
 
+monorepo_parent=../../../..
+docker_build_folder=docker-opam-release
+ROCQ_LOG_PREFIX=bluerock
+
+define opam-img-target
+	cd $(monorepo_parent)/$(docker_build_folder); \
+	docker buildx build \
+		-f Dockerfile-opam-release \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
+		--build-arg ROCQ_LOG_PREFIX=$(ROCQ_LOG_PREFIX) \
+		--build-arg OPAM_PACKAGES='opam pin | $1' \
+		-t $(DOCKER_REPO):$@ \
+		.
+endef
+
 include docker-login.mk
 include docker-img-stage0.mk
 include docker-img-stage0-llvm.mk
+include docker-img-tarball.mk
 include docker-img-stage-release.mk
 include docker-img-stage-release-misc.mk
 include docker-img-basics.mk
