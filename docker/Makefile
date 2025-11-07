@@ -1,232 +1,70 @@
 # Pick default bash, even if it's installed with Homebrew.
 SHELL := $(shell which bash)
 
-DOCKER_REGISTRY ?= registry.gitlab.com
-DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabs_ai/fm/fm-ci
+include config.mk
 
-# DOCKER_REGISTRY ?= ghcr.io
-# DOCKER_SKYLABS_FM_REGISTRY ?= $(DOCKER_REGISTRY)/skylabsai/skylabs-fm
-
-REGISTRY ?= $(DOCKER_REGISTRY)
-BR_REGISTRY ?= $(DOCKER_SKYLABS_FM_REGISTRY)
-
-BR_FMDEPS_VERSION ?= 2025-10-10
-FM_RELEASE_FULL_VERSION = 2025-10-10
-# FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)
-# We keep $(BR_IMAGE_VERSION) purely internal.
-# FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)-$(BR_IMAGE_VERSION)
-RELEASE_TAG ?= fm-release-latest
-# Bump the following number when pushing new images with the same version
-# numbers. This is necessary to properly invalidate the NOVA cache.
-BR_IMAGE_VERSION ?= 1
-LLVM_VERSIONS ?= 18 19 20 21
-LLVM_MAIN_VERSION ?= 19
-I_KNOW_WHAT_I_AM_DOING ?= no
-QUIET ?= true
-FM_RELEASE_TARBALL_NAME = skylabs-fm-release-$(FM_RELEASE_FULL_VERSION)
-
-
-# Checking the value of I_KNOW_WHAT_I_AM_DOING.
-ifneq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-ifneq ($(I_KNOW_WHAT_I_AM_DOING),no)
-$(error I_KNOW_WHAT_I_AM_DOING should be either "yes" or "no")
-endif
-endif
-
-# Support for quiet build.
-ifeq ($(QUIET),true)
-Q := @
-else
-ifeq ($(QUIET),false)
-Q :=
-else
-$(error QUIET should be either "true" or "false")
-endif
-endif
-
-# Support for colors.
-CYAN = 36
-define color
-	"\033[0;$1m$2\033[0m"
-endef
-
+.PHONY: all
 all:
 	@echo -e $(call color,$(CYAN),See README.md for documentation.)
-.PHONY: all
 
-files/_dune-project: ../fm-deps/dune-project
-	$(Q)cp ../fm-deps/dune-project $@
+.PHONY: FORCE
+FORCE:
 
-files/_br-fm-deps.opam: ../fm-deps/dune-project
-	$(Q)dune b --no-print-directory --display=quiet ../fm-deps/br-fm-deps.opam
-	$(Q)cp ../fm-deps/br-fm-deps.opam $@
+GEN_FILES =
 
 DOCKER_BUILD_TARGETS =
-DOCKER_RUN_TARGETS =
+DOCKER_RUN_TARGETS = $(foreach i,$(DOCKER_BUILD_TARGETS),run-$(i))
 DOCKER_PUSH_TARGETS =
 
-define image-target
-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: Dockerfile-fm-ci files/_br-fm-deps.opam files/_dune-project
-	@echo "[DOCKER] Building $$@"
-	$$(Q)docker buildx build --pull \
-		--platform linux/amd64 \
-		-t $$(BR_REGISTRY):$$@ \
-		--build-arg BR_FMDEPS_VERSION=$$(BR_FMDEPS_VERSION) \
-		--build-arg BR_IMAGE_VERSION=$$(BR_IMAGE_VERSION) \
-		--build-arg BR_LLVM_MAJ_VER=$1 \
-		-f $$< .
-.PHONY: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-DOCKER_BUILD_TARGETS += fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-
-run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-	@echo "[DOCKER] Running $$<"
-	$$(Q)docker run -i -t $$(BR_REGISTRY):$$<
-.PHONY: run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-DOCKER_RUN_TARGETS += run-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-
-push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1: fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-	@echo "[DOCKER] Pushing $$<"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$$(Q)docker push $$(BR_REGISTRY):$$<
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $$(BR_REGISTRY):$$<"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
-.PHONY: push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
-DOCKER_PUSH_TARGETS += push-fm-$$(BR_FMDEPS_VERSION)-llvm-$1
+define tag-target
+	@echo "[DOCKER] Tagging $1 as $2"
+	${Q}docker image tag $(DOCKER_REPO):$1 $(DOCKER_REPO):$2
 endef
 
-$(foreach llvm,$(LLVM_VERSIONS),\
-	$(eval $(call image-target,$(llvm))))
+monorepo_parent=../../../..
+docker_build_folder=docker-opam-release
+ROCQ_LOG_PREFIX=bluerock
 
-build: $(DOCKER_BUILD_TARGETS)
+define opam-img-target
+	cd $(monorepo_parent)/$(docker_build_folder); \
+	docker buildx build \
+		-f Dockerfile-opam-release \
+		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
+		--build-arg ROCQ_LOG_PREFIX=$(ROCQ_LOG_PREFIX) \
+		--build-arg OPAM_PACKAGES='opam pin | $1' \
+		-t $(DOCKER_REPO):$@ \
+		.
+endef
+
+include docker-login.mk
+include docker-img-llvm-basics.mk
+include docker-img-stage0.mk
+include docker-img-stage0-llvm.mk
+include docker-img-tarball.mk
+include docker-img-stage-release.mk
+include docker-img-stage-release-misc.mk
+include docker-img-basics.mk
+
 .PHONY: build
+build: $(DOCKER_BUILD_TARGETS)
 
-push: build $(DOCKER_PUSH_TARGETS)
 .PHONY: push
+push: build $(DOCKER_PUSH_TARGETS)
 
+.PHONY: list-targets
 list-targets:
 	@echo "$(DOCKER_BUILD_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_RUN_TARGETS)" | tr ' ' '\n' | sort -V
 	@echo "$(DOCKER_PUSH_TARGETS)" | tr ' ' '\n' | sort -V
-.PHONY: list-targets
+	@echo -e "\n*** Pass TAG_DEFAULTS=yes to overwrite default-tags when pushing. ***"
 
-DEFAULT_TAG := fm-$(BR_FMDEPS_VERSION)-llvm-$(LLVM_MAIN_VERSION)
+.PHONY: clean-all
+clean-all: clean clean-token
 
-tag-default: $(DEFAULT_TAG)
-	@echo "[DOCKER] Tagging $< as fm-default"
-	@docker image tag $(BR_REGISTRY):$< $(BR_REGISTRY):fm-default
-.PHONY: tag-default
-
-run-default: tag-default
-	@echo "[DOCKER] Running fm-default"
-	$(Q)docker run -i -t $(BR_REGISTRY):fm-default
-.PHONY: run-default
-
-push-default: tag-default
-	@echo "[DOCKER] Pushing tag fm-default"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(BR_REGISTRY):fm-default
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $(BR_REGISTRY):fm-default"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
-
-.PHONY: push-default
-
-gitlab-login:
-	@echo -n "Enter your GitLab login: "
-	@read -r LOGIN; echo $$LOGIN > $@
-
-gitlab-token:
-	@echo -e $(call color,$(CYAN),You need a GitLab API token.)
-	@echo "See https://gitlab.com/-/user_settings/personal_access_tokens."
-	@echo -n "Enter your GitLab API token: "
-	@read -r TOKEN; echo $$TOKEN > $@
-
-login: gitlab-login gitlab-token
-	$(Q)docker login -u $$(cat $<) --password-stdin $(REGISTRY) < gitlab-token
-.PHONY: login
-
-logout:
-	$(Q)docker logout $(REGISTRY)
-.PHONY: logout
-
-monorepo_parent=../../../..
-docker_build_folder=docker-opam-release
-
-TAR = $(shell which gtar || which tar)
-$(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar:
-	cd $(monorepo_parent); mkdir -p $(docker_build_folder)/files; time $(TAR) cf $(docker_build_folder)/files/skylabs-fm.tar skylabs-fm/
-
-CP = $(shell which gcp || which cp)
-.PHONY: prepare-release
-prepare-release: $(monorepo_parent)/$(docker_build_folder)/files/skylabs-fm.tar
-	$(CP) -t $(monorepo_parent)/$(docker_build_folder)/files files/dune-config files/LICENSE files/opam-clean
-	$(CP) -t $(monorepo_parent)/$(docker_build_folder) Dockerfile-opam-release
-
-.PHONY: build-release
-build-release: prepare-release
-	cd $(monorepo_parent)/$(docker_build_folder); \
-	docker buildx build \
-		-f Dockerfile-opam-release \
-		--build-arg BASE_REPO="$(DOCKER_SKYLABS_FM_REGISTRY)" \
-		--build-arg BASE_TAG=fm-default \
-		-t $(BR_REGISTRY):$(RELEASE_TAG) \
-		.
-
-.PHONY: run-release
-run-release: build-release
-	@echo "[DOCKER] Running fm-release"
-	$(Q)docker run -i -t $(BR_REGISTRY):$(RELEASE_TAG)
-
-push-release: build-release
-	@echo "[DOCKER] Pushing fm-release"
-ifeq ($(I_KNOW_WHAT_I_AM_DOING),yes)
-	@echo "(Let's hope you did not mess anything up...)"
-	$(Q)docker push $(BR_REGISTRY):$(RELEASE_TAG)
-else
-	@echo "The command that would run would be:"
-	@echo "  docker push $(BR_REGISTRY):$(RELEASE_TAG)"
-	@echo -e $(call color,$(CYAN),Use I_KNOW_WHAT_I_AM_DOING=yes to actually run it)
-endif
-
-.PHONY: push-release
-
-pull-release:
-	$(Q)docker pull $(BR_REGISTRY):$(RELEASE_TAG)
-
-.PHONY: pull-release
-
-PV = $(if $(shell which pv),pv,cat)
-
-ver-release:
-	@echo $(FM_RELEASE_FULL_VERSION)
-name-release:
-	@echo $(FM_RELEASE_TARBALL_NAME)
-
-$(FM_RELEASE_TARBALL_NAME).tar.gz:
-	docker save $(BR_REGISTRY):$(RELEASE_TAG) | $(PV) | gzip > "$@"
-
-pack-release: $(FM_RELEASE_TARBALL_NAME).tar.gz
-.PHONY: pack-release
-
-unpack-release:
-	$(PV) $(FM_RELEASE_TARBALL_NAME).tar.gz | docker load
-.PHONY: unpack-release
-
-clean:
-	@rm -f files/_br-fm-deps.opam files/_dune-project files/fm-artifact.zip
 .PHONY: clean
+clean:
+	$(Q)rm -f $(GEN_FILES)
 
-clean-all: clean
-	@rm -f gitlab-token gitlab-login
-.PHONY: clean-token
-
+.PHONY: system-prune
 system-prune:
 	@docker system prune
-.PHONY: system-prune
