@@ -19,7 +19,7 @@
     "vscode": {
       "extensions": [
           // "coq-community.vscoq1"
-        "maximedenes.vscoq@2.2.6"
+        "maximedenes.vscoq@2.2.6",
         "zeithaste.cursorcharcode@0.2.5",
         "mr-konn.generic-input-method"
       ]
