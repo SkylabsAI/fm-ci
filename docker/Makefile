@@ -29,11 +29,12 @@ define opam-img-target
 	@echo "[DOCKER] Building $@ from $<"
 	$(Q)cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
+		--platform linux/amd64 \
 		-f Dockerfile-opam-release \
+		-t $(DOCKER_REPO):$@ \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
 		--build-arg ROCQ_LOG_PREFIX=$(ROCQ_LOG_PREFIX) \
 		--build-arg OPAM_PACKAGES='opam pin | $1' \
-		-t $(DOCKER_REPO):$@ \
 		.
 endef
 
