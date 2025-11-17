@@ -41,9 +41,19 @@ include docker-img-llvm-basics.mk
 include docker-img-stage0.mk
 include docker-img-stage0-llvm.mk
 include docker-img-tarball.mk
-include docker-img-stage-release.mk
-include docker-img-stage-release-misc.mk
 include docker-img-basics.mk
+
+# Shared between release
+include docker-img-stage-release-misc.mk
+# "Old" release, single Opam layer
+include docker-img-stage-release.mk
+# "New" release, multiple Opam layers, not yet ready
+# TODO enable
+# include docker-img-stage1-vendored.mk
+# include docker-img-stage2-auto.mk
+# include docker-img-stage2-auto-llvm.mk
+# include docker-img-stage3-cpp2v.mk
+# include docker-img-stage4-skylabs.mk
 
 .PHONY: build
 build: $(DOCKER_BUILD_TARGETS)
