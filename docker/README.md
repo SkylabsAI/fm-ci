@@ -132,3 +132,27 @@ To load the image, run either `make unpack-release` or
 ```sh
 docker load -i bluerock-fm-release-$VERSION.tar.gz
 ```
+
+## Produced Images
+
+All image tags use `fm-` or `fm-$(VER)-` as common prefix. Tags:
+
+- os: base operating system + Python uv + git, Make etc
+- docker: os + docker CLI binaries
+- ext-deps: os + Rust, opam, more Python
+- ext-deps-llvm-$(llvm_ver): ext-deps + llvm $(llvm_ver)
+- default = ext-deps-llvm-$(LLVM_MAIN_VERSION)
+
+Planned (not fully working yet):
+- stage1: ext-deps + fmdeps/vendored OPAM packages
+- stage2: stage1 + auto + everything not needing clang
+- stage2-llvm-$(llvm_ver): stage2 + llvm $(llvm_ver)
+- stage3-release: stage2-llvm-$(LLVM_MAIN_VERSION) + cpp2v + C++ stdlib specs + scaffold
+- stage4-sl-release: stage3-release + skylabs-fm
+
+Currently:
+- (old) release: ext-deps-llvm-$(LLVM_MAIN_VERSION) + fmdeps/{vendored, BRiCk, auto}
+
+Planned:
+- (new) release = stage3-release
+- sl-release: stage4-sl-release
