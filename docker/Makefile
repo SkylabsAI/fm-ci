@@ -48,11 +48,12 @@ include docker-img-stage-release-misc.mk
 # "Old" release, single Opam layer
 include docker-img-stage-release.mk
 # "New" release, multiple Opam layers, not yet ready
-include docker-img-stage1-vendored.mk
-include docker-img-stage2-auto.mk
-include docker-img-stage2-auto-llvm.mk
-include docker-img-stage3-cpp2v.mk
-include docker-img-stage4-skylabs.mk
+# TODO enable
+# include docker-img-stage1-vendored.mk
+# include docker-img-stage2-auto.mk
+# include docker-img-stage2-auto-llvm.mk
+# include docker-img-stage3-cpp2v.mk
+# include docker-img-stage4-skylabs.mk
 
 .PHONY: build
 build: $(DOCKER_BUILD_TARGETS)
