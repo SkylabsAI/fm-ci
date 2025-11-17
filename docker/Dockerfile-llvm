@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/skylabsai/workspace:fm-base
+ARG BASE_IMAGE=ghcr.io/skylabsai/workspace:fm-ext-deps
 FROM $BASE_IMAGE
 ARG DEBIAN_CODENAME=bookworm
 ### Install LLVM #############################################################
