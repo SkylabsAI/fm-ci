@@ -42,8 +42,8 @@ include docker-login.mk
 include docker-img-llvm-basics.mk
 include docker-img-os.mk
 include docker-img-docker.mk
-include docker-img-stage0.mk
-include docker-img-stage0-llvm.mk
+include docker-img-stage0-ext-deps.mk
+include docker-img-stage0-ext-deps-llvm.mk
 include docker-img-tarball.mk
 include docker-img-basics.mk
 

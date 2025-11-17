@@ -1,5 +1,5 @@
 .PHONY: fm-$(BR_FMDEPS_VERSION)-base
-fm-$(BR_FMDEPS_VERSION)-base: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-fm-ci files/_br-fm-deps.opam
+fm-$(BR_FMDEPS_VERSION)-base: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-ext-deps files/_br-fm-deps.opam
 	@echo "[DOCKER] Building $@"
 	$(Q)docker buildx build \
 		--platform linux/amd64 \
@@ -7,7 +7,7 @@ fm-$(BR_FMDEPS_VERSION)-base: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-fm-ci files/
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
 		--build-arg \
 		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
-		-f Dockerfile-fm-ci .
+		-f Dockerfile-ext-deps .
 
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-base
 DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-base
