@@ -1,5 +1,5 @@
 $(foreach llvm,$(LLVM_VERSIONS),\
-	$(eval $(call image-target,base,$(llvm))))
+	$(eval $(call llvm-img-target,base,$(llvm))))
 
 .PHONY: fm-default
 fm-default: fm-$(BR_FMDEPS_VERSION)-base-llvm-$(LLVM_MAIN_VERSION)

@@ -1,4 +1,4 @@
-define image-target
+define llvm-img-target
 .PHONY: fm-$(BR_FMDEPS_VERSION)-$1-llvm-$2
 fm-$(BR_FMDEPS_VERSION)-$1-llvm-$2: fm-$(BR_FMDEPS_VERSION)-$1 Dockerfile-llvm
 	@echo "[DOCKER] Building $$@"
