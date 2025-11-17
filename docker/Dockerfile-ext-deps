@@ -8,6 +8,7 @@ FROM $BASE_IMAGE
 
 ### Install system packages ##################################################
 
+USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
 # hadolint ignore=DL3008
@@ -25,6 +26,7 @@ RUN apt-get update -y -q \
 # version from the host.
 RUN touch /usr/bin/perf
 
+USER coq
 # Dune config
 COPY --chown=coq files/dune-config /home/coq/.config/dune/config
 RUN git config --global --add safe.directory '*'
