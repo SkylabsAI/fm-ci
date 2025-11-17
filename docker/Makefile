@@ -26,7 +26,8 @@ docker_build_folder=docker-opam-release
 ROCQ_LOG_PREFIX=bluerock
 
 define opam-img-target
-	cd $(monorepo_parent)/$(docker_build_folder); \
+	@echo "[DOCKER] Building $@ from $<"
+	$(Q)cd $(monorepo_parent)/$(docker_build_folder); \
 	docker buildx build \
 		-f Dockerfile-opam-release \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \

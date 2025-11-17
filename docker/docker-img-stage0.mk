@@ -1,6 +1,6 @@
 .PHONY: fm-$(BR_FMDEPS_VERSION)-base
 fm-$(BR_FMDEPS_VERSION)-base: Dockerfile-fm-ci files/_br-fm-deps.opam
-	@echo "[DOCKER] Building $$@"
+	@echo "[DOCKER] Building $@"
 	$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$@ \
