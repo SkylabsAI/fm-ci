@@ -35,10 +35,6 @@ RUN git config --global --add safe.directory '*'
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
-### Install python dependencies ##############################################
-#
-COPY files/python_deps.txt /tmp/files/python_deps.txt
-
 ### Prepare the opam switch ##################################################
 
 ENV OPAM_VERSION="2.4.1"
