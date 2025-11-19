@@ -87,16 +87,15 @@ make list-targets
 To set up new CI images, e.g., with new FM dependencies, you need to:
  1. Update the `Makefile` configuration as instructed above.
  2. Update the OCaml dependencies in `fm-ci/fm-deps/dune-project`.
- 3. Update the Python dependencies in `fm-ci/docker/files/python_deps.txt`.
- 4. Run `make build` to confirm that images build fine.
- 5. Try running some of the images, to check that they work as expected.
- 6. Run `make push`, confirm the commands look fine, and follow instructions.
- 9. Modify the `versions` section of `fm-ci/config.toml` to:
+ 3. Run `make build` to confirm that images build fine.
+ 4. Try running some of the images, to check that they work as expected.
+ 5. Run `make push`, confirm the commands look fine, and follow instructions.
+ 6. Modify the `versions` section of `fm-ci/config.toml` to:
     - Update the `image` field to contain the new image version,
     - Update the `main_llvm` field according to the `Makefile`.
-10. Make an `fm-ci` MR, and use the `CI::same-branch` tag if needed.
+ 7. Make an `fm-ci` MR, and use the `CI::same-branch` tag if needed.
     - Set the `CI::same-branch` tag in all MRs.
-11. When MRs are ready and approved, take an atomic lock, and then:
+ 8. When MRs are ready and approved, take an atomic lock, and then:
     - Merge all your non-`fm-ci` MRs.
     - Merge your `fm-ci` MR and confirm that CI passes.
     - Release the atomic lock.
@@ -132,3 +131,27 @@ To load the image, run either `make unpack-release` or
 ```sh
 docker load -i bluerock-fm-release-$VERSION.tar.gz
 ```
+
+## Produced Images
+
+All image tags use `fm-` or `fm-$(VER)-` as common prefix. Tags:
+
+- os: base operating system + Python uv + git, Make etc
+- docker: os + docker CLI binaries
+- ext-deps: os + Rust, opam, more Python
+- ext-deps-llvm-$(llvm_ver): ext-deps + llvm $(llvm_ver)
+- default = ext-deps-llvm-$(LLVM_MAIN_VERSION)
+
+Planned (not fully working yet):
+- stage1: ext-deps + fmdeps/vendored OPAM packages
+- stage2: stage1 + auto + everything not needing clang
+- stage2-llvm-$(llvm_ver): stage2 + llvm $(llvm_ver)
+- stage3-release: stage2-llvm-$(LLVM_MAIN_VERSION) + cpp2v + C++ stdlib specs + scaffold
+- stage4-sl-release: stage3-release + skylabs-fm
+
+Currently:
+- (old) release: ext-deps-llvm-$(LLVM_MAIN_VERSION) + fmdeps/{vendored, BRiCk, auto}
+
+Planned:
+- (new) release = stage3-release
+- sl-release: stage4-sl-release

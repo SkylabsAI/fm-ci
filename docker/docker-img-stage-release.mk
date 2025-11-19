@@ -1,6 +1,6 @@
 .PHONY: fm-$(BR_FMDEPS_VERSION)-release
-fm-$(BR_FMDEPS_VERSION)-release: fm-$(BR_FMDEPS_VERSION)-base-llvm-$(LLVM_MAIN_VERSION) prepare-fm-release
-	$(call opam-img-target,grep -E "/fmdeps/(auto|BRiCk|vendored/(vscoq|coq-lsp))" | grep -E -v "rocq-bluerock-cpp-(demo|stdlib)")
+fm-$(BR_FMDEPS_VERSION)-release: fm-$(BR_FMDEPS_VERSION)-ext-deps-llvm-$(LLVM_MAIN_VERSION) prepare-fm-release
+	$(call opam-img-target,grep -E "/fmdeps/(auto|BRiCk|vendored/(vsrocq|rocq-lsp))" | grep -E -v "rocq-bluerock-cpp-stdlib")
 
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-release
 DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-release

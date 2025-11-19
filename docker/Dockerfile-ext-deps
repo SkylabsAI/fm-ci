@@ -3,37 +3,22 @@
 # https://github.com/coq-community/docker-base/blob/master/base/bare/Dockerfile
 # https://github.com/coq-community/docker-base/blob/master/LICENSE
 
-FROM debian:bookworm
-
-SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
-
-CMD ["/bin/bash", "--login"]
-
-# Supports bash-isms better, for instance for cram tests
-# (see https://bluerocksecurity.atlassian.net/browse/FM-4754)
-RUN ln -sf bash /bin/sh
-
-### Add Coq group and user with sudo perms ###################################
-
-RUN groupadd -g 1008 coq \
- && useradd --no-log-init -m -s /bin/bash -g coq -G sudo -p '' -u 1008 coq
-
-### Install uv
-
-COPY --from=ghcr.io/astral-sh/uv:0.9.7 /uv /uvx /bin/
+ARG BASE_IMAGE=ghcr.io/skylabsai/workspace:fm-os
+FROM $BASE_IMAGE
 
 ### Install system packages ##################################################
 
+USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
 # hadolint ignore=DL3008
-RUN cat /proc/cpuinfo /proc/meminfo \
- && apt-get update -y -q \
+RUN apt-get update -y -q \
  && apt-get install -y -q --no-install-recommends autoconf automake \
-      build-essential ca-certificates curl git less libgmp-dev m4 \
-      openssh-client pkg-config rlwrap rsync sudo time unzip ninja-build \
-      libffi-dev zlib1g-dev bsdmainutils git-lfs m4 zip cmake linux-perf \
-      moreutils python3-pip python3-venv python3-setuptools bear \
+      libgmp-dev \
+      rlwrap \
+      ninja-build \
+      libffi-dev zlib1g-dev cmake linux-perf \
+      bear \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -41,14 +26,7 @@ RUN cat /proc/cpuinfo /proc/meminfo \
 # version from the host.
 RUN touch /usr/bin/perf
 
-WORKDIR /home/coq
 USER coq
-
-RUN mkdir -p -v /home/coq/bin /home/coq/.local/bin
-
-# config
-ENV PATH="/home/coq/.local/bin:${PATH}"
-
 # Dune config
 COPY --chown=coq files/dune-config /home/coq/.config/dune/config
 RUN git config --global --add safe.directory '*'
@@ -56,15 +34,6 @@ RUN git config --global --add safe.directory '*'
 ### Install Rust
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-### Install python dependencies ##############################################
-#
-COPY files/python_deps.txt /tmp/files/python_deps.txt
-
-RUN python3 -m venv .pyenv \
- && ./.pyenv/bin/python -m pip install \
- -r /tmp/files/python_deps.txt \
- && echo ". ~/.pyenv/bin/activate" >> .profile
 
 ### Prepare the opam switch ##################################################
 
