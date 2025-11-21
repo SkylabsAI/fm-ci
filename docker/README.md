@@ -25,22 +25,12 @@ if your token expired).
 
 To generate a new set of CI image, you need to:
 1. Updating the `BR_FMDEPS_VERSION` variable in the `Makefile`.
-2. Reset the `BR_IMAGE_VERSION` variable to `1` in the `Makefile`.
 3. Optionally change other `Makefile` variables (LLVM version, ...)
 
-**Note:** if you only want to update an existing image, you need to bump the
-`BR_IMAGE_VERSION` variable. Note that this only makes sense for minor changes
-since the image tags will be overwritten when updating the images.
-
-The following variables control what combinations of LLVM and SWI-Prolog are
+The following variables control what combinations of LLVM are
 used in the produced CI images:
 - `LLVM_VERSIONS` lists LLVM versions for which an image is generated.
 - `LLVM_MAIN_VERSION` selects the main LLVM version (among the above).
-
-**Note:** we do not generate images for the whole matrix of combinations. We
-instead generate images for one line and one row of the matrix:
-- One for each supported LLVM version, using the main SWI-Prolog version.
-- One for each supported SWI-Prolog version, using the main LLVM version.
 
 ## Build and Running
 
@@ -54,6 +44,12 @@ make list-targets
 ```
 to get a list of available `Makefile` targets. The list also includes targets
 for running (prefixed with `run-`) and pushing (prefixed with `push-`) images.
+
+## Testing images in CI
+
+Open `fmdeps/ci/.github/workflows/main.yml`, find the `jobs.ci-config` section,
+and update the `env.docker_img_ver` environment variable, and possibly the
+`outputs.llvm_main_ver` if that changed.
 
 ## Cleaning
 
@@ -69,12 +65,14 @@ make push
 Note that by default the commands are not run. See the output to know how to
 actually push.
 
+Pushing images with the `BR_FMDEPS_VERSION` currently used in CI (especially
+`main` branches) will affect new pipelines, so don't do it.
+
 To override default tags, call with `TAG_DEFAULTS=yes`.
 
 **Note:** when you are setting up a new image version, with a distinct value
 for `BR_FMDEPS_VERSION`, pushing is perfectly safe. In case of mistake in the
-images configuration, you can push again without worry (provided you bump the
-`BR_IMAGE_VERSION` variable in the case NOVA CI ran).
+images configuration, you can safely push again.
 
 You can also push a single image if you want, using the corresponding target
 from the output of
@@ -90,14 +88,11 @@ To set up new CI images, e.g., with new FM dependencies, you need to:
  3. Run `make build` to confirm that images build fine.
  4. Try running some of the images, to check that they work as expected.
  5. Run `make push`, confirm the commands look fine, and follow instructions.
- 6. Modify the `versions` section of `fm-ci/config.toml` to:
-    - Update the `image` field to contain the new image version,
-    - Update the `main_llvm` field according to the `Makefile`.
- 7. Make an `fm-ci` MR, and use the `CI::same-branch` tag if needed.
-    - Set the `CI::same-branch` tag in all MRs.
+ 6. Update `docker_img_ver` and `llvm_main_ver` in `fmdeps/ci/.github/workflows/main.yml`.
+ 7. Make a `ci` PR and any associated PRs for fixes.
  8. When MRs are ready and approved, take an atomic lock, and then:
-    - Merge all your non-`fm-ci` MRs.
-    - Merge your `fm-ci` MR and confirm that CI passes.
+    - Merge all your non-`ci` MRs.
+    - Merge your `ci` MR and confirm that CI passes.
     - Release the atomic lock.
 
 To add an LLVM version, also update the hardcoded list in `gen.ml`.
