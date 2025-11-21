@@ -45,6 +45,3 @@ RUN mkdir -p -v /home/coq/bin /home/coq/.local/bin
 
 # config
 ENV PATH="/home/coq/.local/bin:${PATH}"
-
-ARG DOCKER_IMAGE_VERSION
-ENV DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION}"

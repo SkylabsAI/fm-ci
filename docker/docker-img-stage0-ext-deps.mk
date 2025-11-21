@@ -5,8 +5,6 @@ fm-$(BR_FMDEPS_VERSION)-ext-deps: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-ext-deps
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$@ \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
-		--build-arg \
-		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
 		-f Dockerfile-ext-deps .
 
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-ext-deps

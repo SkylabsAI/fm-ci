@@ -55,16 +55,3 @@ RUN set -x \
  && opam update -y \
  && opam install -y /tmp/files/br-fm-deps.opam \
  && /tmp/files/opam-clean
-
-### Image versioning environment setup ########################################################
-
-# ARG BR_FMDEPS_VERSION
-# RUN test -n "${BR_FMDEPS_VERSION}"
-
-# ARG BR_IMAGE_VERSION
-# RUN test -n "${BR_IMAGE_VERSION}"
-
-# ENV DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}"
-
-ARG DOCKER_IMAGE_VERSION
-ENV DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION}"

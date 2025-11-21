@@ -25,7 +25,4 @@ RUN set -x \
 
 RUN groupadd -g 988 docker && adduser coq docker
 
-ARG DOCKER_IMAGE_VERSION
-ENV DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION}"
-
 USER coq

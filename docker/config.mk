@@ -1,16 +1,13 @@
 DOCKER_REGISTRY ?= ghcr.io
 DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/workspace
 
-BR_FMDEPS_VERSION ?= 2025-11-16
+# Bump the following number when pushing new images with the same version
+# numbers. This is necessary to properly invalidate the NOVA cache.
+BR_FMDEPS_VERSION ?= 2025-11-21
 FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)
-# We keep $(BR_IMAGE_VERSION) purely internal.
-# FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)-$(BR_IMAGE_VERSION)
 
 # Default RELEASE_TAG is the unversioned one
 RELEASE_TAG ?= fm-release
-# Bump the following number when pushing new images with the same version
-# numbers. This is necessary to properly invalidate the NOVA cache.
-BR_IMAGE_VERSION ?= 1
 LLVM_VERSIONS ?= 18 19 20 21
 LLVM_MAIN_VERSION ?= 19
 I_KNOW_WHAT_I_AM_DOING ?= no
