@@ -5,8 +5,6 @@ fm-$(BR_FMDEPS_VERSION)-docker: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-docker
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$@ \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
-		--build-arg \
-		  DOCKER_IMAGE_VERSION="docker.${BR_FMDEPS_VERSION},image.${BR_IMAGE_VERSION}" \
 		-f Dockerfile-docker .
 
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-docker

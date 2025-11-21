@@ -34,16 +34,3 @@ ENV CXX=${LLVM_BASE_DIR}clang++
 # Set PATH for both interactive and scripted users.
 ENV PATH=${llvm_base_dir}:"$PATH"
 RUN echo PATH=${llvm_base_dir}:'"$PATH"' >> ~coq/.profile
-
-### Image versioning environment setup ########################################################
-
-# ARG BR_FMDEPS_VERSION
-# RUN test -n "${BR_FMDEPS_VERSION}"
-
-# ARG BR_IMAGE_VERSION
-# RUN test -n "${BR_IMAGE_VERSION}"
-
-# ENV DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.${LLVM_VER},image.${BR_IMAGE_VERSION}"
-
-ARG DOCKER_IMAGE_VERSION
-ENV DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION}"

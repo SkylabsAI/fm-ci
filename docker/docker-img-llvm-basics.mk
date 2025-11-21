@@ -7,8 +7,6 @@ fm-$(BR_FMDEPS_VERSION)-$1-llvm-$2: fm-$(BR_FMDEPS_VERSION)-$1 Dockerfile-llvm
 		-t $(DOCKER_REPO):$$@ \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$$< \
 		--build-arg LLVM_MAJ_VER=$2 \
-		--build-arg \
-		  DOCKER_IMAGE_VERSION="fmdeps.${BR_FMDEPS_VERSION},llvm.$2,image.${BR_IMAGE_VERSION}" \
 		-f Dockerfile-llvm .
 
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-$1-llvm-$2
