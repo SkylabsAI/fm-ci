@@ -3,7 +3,7 @@ DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/workspace
 
 # Bump the following number when pushing new images with the same version
 # numbers. This is necessary to properly invalidate the NOVA cache.
-BR_FMDEPS_VERSION ?= 2025-11-25
+BR_FMDEPS_VERSION ?= 2025-11-27
 FM_RELEASE_FULL_VERSION = $(BR_FMDEPS_VERSION)
 
 # Default RELEASE_TAG is the unversioned one
