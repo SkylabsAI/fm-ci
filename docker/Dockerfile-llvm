@@ -5,10 +5,14 @@ ARG DEBIAN_CODENAME=bookworm
 
 ARG LLVM_MAJ_VER
 RUN test -n "${LLVM_MAJ_VER}"
+ARG LLVM_MAX_VER
+RUN test -n "${LLVM_MAX_VER}"
 
 ENV LLVM_VER=${LLVM_MAJ_VER}
 
-RUN echo "deb [trusted=yes] http://apt.llvm.org/${DEBIAN_CODENAME}/ llvm-toolchain-${DEBIAN_CODENAME}-${LLVM_VER} main" \
+RUN \
+  let "LLVM_VER == LLVM_MAX_VER" && ver_suffix="" || ver_suffix="-$LLVM_VER" \
+  && echo "deb [trusted=yes] http://apt.llvm.org/${DEBIAN_CODENAME}/ llvm-toolchain-${DEBIAN_CODENAME}${ver_suffix} main" \
   | sudo tee -a /etc/apt/sources.list.d/llvm.list
 
 RUN sudo apt-get update -qy \
