@@ -4,6 +4,7 @@ fm-$(BR_FMDEPS_VERSION)-docker: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-docker
 	$(Q)docker buildx build \
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$@ \
+		$(call docker_opts,docker,$@) \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
 		-f Dockerfile-docker .
 
