@@ -12,7 +12,9 @@ ENV build_path=/tmp/build-dir
 
 ARG ROCQ_LOG_PREFIX=bluerock
 ARG OPAM_PACKAGES
+ARG HOST_DUNE_CACHE=/home/coq/dune_nfs/dune_cache
 RUN --mount=type=secret,id=CI_JOB_TOKEN,env=CI_JOB_TOKEN \
+  --mount=type=bind,target=/home/coq/.cache,source=${HOST_DUNE_CACHE} \
   git clone --depth 1 https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bedrocksystems/bhv.git ${build_path} \
   && cd ${build_path} \
   && git fetch --quiet origin ${ROOT_COMMIT} \

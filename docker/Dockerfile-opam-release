@@ -8,8 +8,10 @@ COPY files/opam-clean /tmp/files/opam-clean
 
 ARG ROCQ_LOG_PREFIX=bluerock
 ARG OPAM_PACKAGES
+ARG HOST_DUNE_CACHE=/home/coq/dune_nfs/dune_cache
 RUN \
   --mount=type=bind,target=/tmp/workspace.tar,source=files/workspace.tar \
+  --mount=type=bind,target=/home/coq/.cache,source=${HOST_DUNE_CACHE} \
   cd /tmp \
   && tar xf workspace.tar \
   && cd /tmp/workspace \
