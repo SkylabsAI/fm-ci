@@ -2,7 +2,6 @@ ARG BASE_IMAGE=ghcr.io/skylabsai/workspace:fm-default
 FROM $BASE_IMAGE
 
 ARG ROOT_COMMIT
-ENV ROOT_COMMIT=${ROOT_COMMIT}
 
 COPY --chown=coq files/LICENSE /home/coq/LICENSE
 
