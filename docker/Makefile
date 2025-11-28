@@ -30,8 +30,8 @@ ROCQ_LOG_PREFIX=bluerock
 ifeq ($(CI),true)
 define docker_opts
 	--load --push \
-	--cache-from type=registry,ref=$(DOCKER_REPO):$2-cache \
-	--cache-to type=registry,ref=$(DOCKER_REPO):$2-cache,mode=max
+	--cache-from type=registry,ref=$(DOCKER_REPO):cache \
+	--cache-to type=registry,ref=$(DOCKER_REPO):cache,mode=max
 endef
 else
 define docker_opts
