@@ -4,6 +4,7 @@ fm-$(BR_FMDEPS_VERSION)-os: Dockerfile-os
 	$(Q)docker buildx build --pull \
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$@ \
+		$(call docker_opts,os,$@) \
 		-f $< .
 DOCKER_BUILD_TARGETS += fm-$(BR_FMDEPS_VERSION)-os
 DOCKER_PUSH_TARGETS += push-fm-$(BR_FMDEPS_VERSION)-os

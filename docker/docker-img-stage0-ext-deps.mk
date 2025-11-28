@@ -4,6 +4,7 @@ fm-$(BR_FMDEPS_VERSION)-ext-deps: fm-$(BR_FMDEPS_VERSION)-os Dockerfile-ext-deps
 	$(Q)docker buildx build \
 		--platform linux/amd64 \
 		-t $(DOCKER_REPO):$@ \
+		$(call docker_opts,ext-deps,$@) \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
 		-f Dockerfile-ext-deps .
 

@@ -25,6 +25,19 @@ monorepo_parent=../../../..
 docker_build_folder=docker-opam-release
 ROCQ_LOG_PREFIX=bluerock
 
+# Call with image basename (full name - version) as 1st argument
+# Call with image full name $@ as 2nd argument
+ifeq ($(CI),true)
+define docker_opts
+	--load --push \
+	--cache-from type=registry,ref=$(DOCKER_REPO):$1-cache \
+	--cache-to type=registry,ref=$(DOCKER_REPO):$1-cache,mode=max
+endef
+else
+define docker_opts
+endef
+endif
+
 define opam-img-target
 	@echo "[DOCKER] Building $@ from $<"
 	$(Q)cd $(monorepo_parent)/$(docker_build_folder); \
@@ -32,6 +45,7 @@ define opam-img-target
 		--platform linux/amd64 \
 		-f Dockerfile-opam-release \
 		-t $(DOCKER_REPO):$@ \
+		$(call docker_opts,$@) \
 		--build-arg BASE_IMAGE=$(DOCKER_REPO):$< \
 		--build-arg ROCQ_LOG_PREFIX=$(ROCQ_LOG_PREFIX) \
 		--build-arg OPAM_PACKAGES='opam pin | $1' \

@@ -1,5 +1,5 @@
 DOCKER_REGISTRY ?= ghcr.io
-DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/workspace
+DOCKER_REPO ?= $(DOCKER_REGISTRY)/skylabsai/ci
 
 # Bump the following number when pushing new images with the same version
 # numbers. This is necessary to properly invalidate the NOVA cache.
